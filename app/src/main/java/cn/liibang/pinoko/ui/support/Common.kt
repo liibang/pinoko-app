@@ -3,10 +3,12 @@ package cn.liibang.pinoko.ui.support
 import android.content.Context
 import android.widget.Toast
 import androidx.compose.foundation.LocalIndication
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.shape.GenericShape
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.composed
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.draw.shadow
@@ -44,3 +46,12 @@ fun Modifier.bottomElevation(): Modifier = this.then(Modifier.drawWithContent {
 
 fun generateUUID() = UUID.randomUUID().toString()
 
+
+fun Modifier.clickableNoRipple(onClick: () -> Unit): Modifier =
+    composed {
+        clickable(
+            onClick = onClick,
+            indication = null,
+            interactionSource = remember { MutableInteractionSource() }
+        )
+    }

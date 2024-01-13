@@ -22,6 +22,7 @@ import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -35,6 +36,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.NavGraph.Companion.findStartDestination
@@ -42,12 +44,18 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import android.Manifest
+import android.os.Build
+import androidx.annotation.RequiresApi
 import cn.liibang.pinoko.ui.screen.agenda.AgendaScreen
 import cn.liibang.pinoko.ui.screen.task.TaskForm
 import cn.liibang.pinoko.ui.screen.stats.StatsScreen
 import cn.liibang.pinoko.ui.screen.task.TaskScreen
 import cn.liibang.pinoko.ui.screen.test.TaskModalForm
 import cn.liibang.pinoko.ui.theme.AppTheme
+import com.google.accompanist.permissions.ExperimentalPermissionsApi
+import com.google.accompanist.permissions.isGranted
+import com.google.accompanist.permissions.rememberPermissionState
 import kotlinx.coroutines.launch
 
 
@@ -84,17 +92,18 @@ sealed class Router(val route: String, val metadata: MetaData) {
 
 val LocalNavController = compositionLocalOf<NavController> { error("No NavController found!") }
 
-@OptIn(ExperimentalMaterial3Api::class)
+@RequiresApi(Build.VERSION_CODES.TIRAMISU)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalPermissionsApi::class)
 @Composable
 @Preview
-fun BestScreen() {
+fun BestScreen(mainViewModel: MainViewModel = hiltViewModel()) {
 
     val scope = rememberCoroutineScope()
     val modalBottomSheetState = rememberModalBottomSheetState(false)
     var isShowModalMenu by remember { mutableStateOf(false) }
     val navController = rememberNavController()
 
-    val mainViewModel: MainViewModel = viewModel()
+
 
     val window = (LocalView.current.context as Activity).window
 
@@ -102,6 +111,15 @@ fun BestScreen() {
 //    WindowCompat.setDecorFitsSystemWindows(window, false)
 
     AppTheme {
+
+        val postNotificationPermission=
+            rememberPermissionState(permission = Manifest.permission.POST_NOTIFICATIONS)
+        LaunchedEffect(key1 = true ){
+            if(!postNotificationPermission.status.isGranted){
+                postNotificationPermission.launchPermissionRequest()
+            }
+        }
+
 
         val surface = MaterialTheme.colorScheme.surfaceColorAtElevation(0.1.dp).toArgb()
         val surfaceDim = MaterialTheme.colorScheme.surfaceDim.toArgb()
@@ -116,6 +134,7 @@ fun BestScreen() {
         }
 
         CompositionLocalProvider(LocalNavController provides navController) {
+
             Scaffold(
                 floatingActionButton = {
                     XFab(currentRouter = mainViewModel.currentRoute)

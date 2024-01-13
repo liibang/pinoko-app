@@ -617,7 +617,6 @@ private fun FormItem(
             contentColor = Color.Unspecified,
             containerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(0.1.dp)
         ),
-//        enabled = enabled
     ) {
         Row(
             modifier = Modifier.padding(vertical = 10.dp),

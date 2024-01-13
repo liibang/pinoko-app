@@ -82,11 +82,9 @@ fun TaskScreen(todoViewModel: TaskViewModel = viewModel(), categoryViewModel: Ca
                 Text(text = "无事了", fontWeight = FontWeight.SemiBold, fontSize = 17.sp)
             }
         } else {
-            TaskList(tasks = tasks, updateCompletedStatus = todoViewModel::updateCompletedStatus)
 
             Column(Modifier.padding(horizontal = 16.dp, vertical = 10.dp)) {
-
-                tasks.forEachIndexed { index, task ->
+                tasks.forEachIndexed { _, task ->
                     TaskCard(task, todoViewModel::updateCompletedStatus, deleteTask = todoViewModel::delete)
                 }
             }

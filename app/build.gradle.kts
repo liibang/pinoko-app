@@ -63,6 +63,10 @@ android {
 
 dependencies {
 
+    //
+    implementation("com.google.accompanist:accompanist-permissions:0.32.0")
+
+
     //hilt
     implementation("com.google.dagger:hilt-android:2.44")
     kapt("com.google.dagger:hilt-android-compiler:2.44")

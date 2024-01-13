@@ -32,6 +32,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
@@ -71,13 +72,16 @@ fun TaskCard(
     Surface(
         modifier = Modifier
             .padding(bottom = bottomPadding)
-            .background(MaterialTheme.colorScheme.surfaceDim)
-            .clickable { navController.navigate(Router.TaskForm.route + "?id=" + task.id) },
+//            .background(MaterialTheme.colorScheme.surfaceDim)
+//            .clip(RoundedCornerShape(shapeSize))
+            ,
         shape = RoundedCornerShape(shapeSize),
         shadowElevation = shadowElevation,
     ) {
         Row(
             modifier = Modifier
+                .clickable() { navController.navigate(Router.TaskForm.route + "?id=" + task.id) }
+                .background(MaterialTheme.colorScheme.surfaceDim)
                 .border(
                     start = Border(
                         strokeWidth = if (isShowCategoryColor) categoryColorBorderWidth else 0.dp,

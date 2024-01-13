@@ -22,6 +22,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -75,8 +76,11 @@ fun AgendaScreen(
                     color = MaterialTheme.colorScheme.outline,
                     modifier = Modifier.padding(bottom = 2.dp, start = 3.dp)
                 )
-                Surface(shadowElevation = 1.dp, shape = RoundedCornerShape(10.dp)) {
-                    Column(modifier = Modifier.background(MaterialTheme.colorScheme.surfaceDim)) {
+                Surface(
+                    shadowElevation = 1.dp,
+                    shape = RoundedCornerShape(10.dp),
+                ) {
+                    Column {
                         val borderWidth = 5.5.dp
                         tasks.forEachIndexed { index, it ->
                             TaskCard(
