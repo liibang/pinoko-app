@@ -43,6 +43,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 import cn.liibang.pinoko.R
 import cn.liibang.pinoko.model.TaskCategoryVO
@@ -53,7 +54,7 @@ import cn.liibang.pinoko.ui.screen.category.DEFAULT_CATEGORY_ALL
 
 
 @Composable
-fun TaskScreen(todoViewModel: TaskViewModel = viewModel(), categoryViewModel: CategoryViewModel = viewModel()) {
+fun TaskScreen(todoViewModel: TaskViewModel = hiltViewModel(), categoryViewModel: CategoryViewModel = viewModel()) {
 
     val taskCategories by categoryViewModel.taskCategories.collectAsState()
     val selectedCategoryID by todoViewModel.selectedCategoryID.collectAsState()

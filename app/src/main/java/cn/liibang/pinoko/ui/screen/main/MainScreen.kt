@@ -102,24 +102,20 @@ fun BestScreen(mainViewModel: MainViewModel = hiltViewModel()) {
     val modalBottomSheetState = rememberModalBottomSheetState(false)
     var isShowModalMenu by remember { mutableStateOf(false) }
     val navController = rememberNavController()
-
-
-
     val window = (LocalView.current.context as Activity).window
 
 
-//    WindowCompat.setDecorFitsSystemWindows(window, false)
+    // 允许用户通知
+    val postNotificationPermission =
+        rememberPermissionState(permission = Manifest.permission.POST_NOTIFICATIONS)
+    LaunchedEffect(key1 = true) {
+        if (!postNotificationPermission.status.isGranted) {
+            postNotificationPermission.launchPermissionRequest()
+        }
+    }
+
 
     AppTheme {
-
-        val postNotificationPermission=
-            rememberPermissionState(permission = Manifest.permission.POST_NOTIFICATIONS)
-        LaunchedEffect(key1 = true ){
-            if(!postNotificationPermission.status.isGranted){
-                postNotificationPermission.launchPermissionRequest()
-            }
-        }
-
 
         val surface = MaterialTheme.colorScheme.surfaceColorAtElevation(0.1.dp).toArgb()
         val surfaceDim = MaterialTheme.colorScheme.surfaceDim.toArgb()
@@ -156,7 +152,7 @@ fun BestScreen(mainViewModel: MainViewModel = hiltViewModel()) {
                         .fillMaxSize()
                         .padding(bottom = padding.calculateBottomPadding()),
 //                enterTransition = { EnterTransition.None },
-                exitTransition = { ExitTransition.None },
+                    exitTransition = { ExitTransition.None },
                 ) {
                     composable(Router.Agenda.route) { AgendaScreen() }
                     composable(Router.Task.route) { TaskScreen() }

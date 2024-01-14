@@ -25,7 +25,7 @@ class MainViewModel @Inject constructor(val appDatabase: AppDatabase, val alarmS
     }
 
     init {
-//        alarmScheduler.schedule(AlarmItem(alarmTime = LocalDateTime.now().plusSeconds(15), message = "ok i got u"))
+        alarmScheduler.schedule(AlarmItem(id = "TEST123",alarmTime = LocalDateTime.now().plusSeconds(12), message = "ok i got u"))
     }
 
     fun scanNotify() {

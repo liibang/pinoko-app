@@ -72,6 +72,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 import cn.liibang.pinoko.data.entity.TaskPO
 import cn.liibang.pinoko.model.TaskCategoryVO
@@ -98,7 +99,7 @@ enum class EditMode() {
 @Composable
 fun TaskForm(
     id: String?,
-    taskViewModel: TaskViewModel = viewModel(),
+    taskViewModel: TaskViewModel = hiltViewModel(),
     categoryViewModel: CategoryViewModel = viewModel(),
 ) {
 

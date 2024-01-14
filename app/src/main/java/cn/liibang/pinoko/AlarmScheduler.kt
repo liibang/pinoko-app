@@ -8,6 +8,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.graphics.BitmapFactory
+import android.graphics.drawable.Icon
 import androidx.core.app.NotificationCompat
 
 import java.time.LocalDateTime
@@ -18,11 +19,13 @@ const val messageKEY = "TaskNotifyMessage"
 
 interface AlarmScheduler {
     fun schedule(alarmItem: AlarmItem)
-    fun cancel(alarmItem: AlarmItem)
+    fun cancel(alarmItemId: String)
 }
+
 data class AlarmItem(
-    val alarmTime : LocalDateTime,
-    val message : String
+    val id: String,
+    val alarmTime: LocalDateTime,
+    val message: String
 )
 
 class AlarmSchedulerImpl(
@@ -41,18 +44,18 @@ class AlarmSchedulerImpl(
             alarmItem.alarmTime.atZone(ZoneId.systemDefault()).toEpochSecond() * 1000L,
             PendingIntent.getBroadcast(
                 context,
-                alarmItem.hashCode(),
+                alarmItem.id.hashCode(),
                 intent,
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
             )
         )
     }
 
-    override fun cancel(alarmItem: AlarmItem) {
+    override fun cancel(alarmItemId: String) {
         alarmManager.cancel(
             PendingIntent.getBroadcast(
                 context,
-                alarmItem.hashCode(),
+                alarmItemId.hashCode(),
                 Intent(context, AlarmReceiver::class.java),
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
             )
@@ -61,21 +64,29 @@ class AlarmSchedulerImpl(
 }
 
 
-
 class AlarmReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context?, intent: Intent?) {
+
+
         val message = intent?.getStringExtra(messageKEY) ?: return
         context?.also {
+            val pendingIntent = PendingIntent.getActivity(
+                context,
+                0,
+                Intent(context, MainActivity::class.java),
+                PendingIntent.FLAG_IMMUTABLE
+            )
             val notificationManager =
                 context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-            val notification=NotificationCompat.Builder(context,"alarm_id")
+            val notification = NotificationCompat.Builder(context, "alarm_id")
                 .setContentTitle("皮诺可Todo")
                 .setContentText(message)
                 .setSmallIcon(R.mipmap.icon)
                 .setPriority(NotificationManager.IMPORTANCE_HIGH)
                 .setAutoCancel(true)
+                .addAction(androidx.core.R.drawable.ic_call_decline, "test", pendingIntent)
+                .addAction(androidx.core.R.drawable.ic_call_answer, "test", pendingIntent)
                 .build()
-
             notificationManager.notify(
                 1,
                 notification

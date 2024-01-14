@@ -3,12 +3,15 @@ package cn.liibang.pinoko.ui.screen.task
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.sqlite.db.SimpleSQLiteQuery
+import cn.liibang.pinoko.AlarmItem
+import cn.liibang.pinoko.AlarmScheduler
 import cn.liibang.pinoko.data.AppDatabase
 import cn.liibang.pinoko.data.StringUUID
 import cn.liibang.pinoko.data.entity.TaskPO
 import cn.liibang.pinoko.model.TaskVO
 import cn.liibang.pinoko.ui.screen.category.DEFAULT_CATEGORY_ALL
 import cn.liibang.pinoko.ui.support.generateUUID
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -19,11 +22,15 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.time.LocalDateTime
+import javax.inject.Inject
 
 
-class TaskViewModel(private val appDatabase: AppDatabase = AppDatabase.getDatabase()) :
+@HiltViewModel
+class TaskViewModel @Inject constructor(
+    val appDatabase: AppDatabase,
+    val alarmScheduler: AlarmScheduler
+) :
     ViewModel() {
-
 
     private val _selectedCategoryID = MutableStateFlow(DEFAULT_CATEGORY_ALL.id)
     val selectedCategoryID = _selectedCategoryID.asStateFlow()
@@ -92,6 +99,7 @@ class TaskViewModel(private val appDatabase: AppDatabase = AppDatabase.getDataba
                         )
                     )
                 else update(task.copy(updatedAt = now))
+                schedule(task)
             }
         }
     }
@@ -99,6 +107,24 @@ class TaskViewModel(private val appDatabase: AppDatabase = AppDatabase.getDataba
     fun delete(id: StringUUID) {
         viewModelScope.launch {
             appDatabase.taskDao().delete(id)
+            // 这里饿汉的去取消事件 TODO
+            alarmScheduler.cancel(id)
+        }
+    }
+
+    private fun schedule(task: TaskPO) {
+        if (task.reminderTime != null) {
+            // 先取消 再设置
+            alarmScheduler.cancel(task.id)
+            alarmScheduler.schedule(
+                AlarmItem(
+                    id = task.id,
+                    alarmTime = task.reminderTime,
+                    message = task.name
+                )
+            )
+        } else {
+            alarmScheduler.cancel(task.id)
         }
     }
 

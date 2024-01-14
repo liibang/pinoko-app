@@ -27,6 +27,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 import cn.liibang.pinoko.R
 import cn.liibang.pinoko.ui.component.TaskCard
@@ -36,7 +37,7 @@ import cn.liibang.pinoko.ui.theme.categoryColor
 @Composable
 fun AgendaScreen(
     agendaViewModel: AgendaViewModel = viewModel(),
-    taskViewModel: TaskViewModel = viewModel()
+    taskViewModel: TaskViewModel = hiltViewModel()
 ) {
 
 
