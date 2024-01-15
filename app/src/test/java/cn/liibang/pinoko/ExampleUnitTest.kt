@@ -40,8 +40,7 @@ class ExampleUnitTest {
 
     @Test
     fun test_uuid() {
-        println(LocalDate.now().toTimestamp())
-        println(LocalTime.now().getLong(ChronoField.SECOND_OF_DAY))
+        println()
     }
 }
 
