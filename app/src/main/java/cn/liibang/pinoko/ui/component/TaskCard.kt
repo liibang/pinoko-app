@@ -46,6 +46,9 @@ import cn.liibang.pinoko.ui.screen.main.Router
 import cn.liibang.pinoko.ui.support.Border
 import cn.liibang.pinoko.ui.support.border
 import cn.liibang.pinoko.ui.theme.categoryColor
+import java.time.LocalDate
+import java.time.LocalDateTime
+import java.time.LocalTime
 import kotlin.reflect.KFunction1
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -70,17 +73,13 @@ fun TaskCard(
     val navController = LocalNavController.current
 
     Surface(
-        modifier = Modifier
-            .padding(bottom = bottomPadding)
-//            .background(MaterialTheme.colorScheme.surfaceDim)
-//            .clip(RoundedCornerShape(shapeSize))
-            ,
+        modifier = Modifier.padding(bottom = bottomPadding),
         shape = RoundedCornerShape(shapeSize),
         shadowElevation = shadowElevation,
     ) {
         Row(
             modifier = Modifier
-                .clickable() { navController.navigate(Router.TaskForm.route + "?id=" + task.id) }
+                .clickable { navController.navigate(Router.TaskForm.route + "?id=" + task.id) }
                 .background(MaterialTheme.colorScheme.surfaceDim)
                 .border(
                     start = Border(
@@ -112,6 +111,7 @@ fun TaskCard(
                 )
 
                 if (isShowSecondRow) {
+                    val isOverTime = LocalDateTime.now().isAfter(task.dueDate?.atTime(task.dueTime ?: LocalTime.MAX))
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier.padding(start = 5.dp)
@@ -119,7 +119,7 @@ fun TaskCard(
                         Text(
                             text = task.dueDate.toString() + " " + (task.dueTime ?: ""),
                             fontSize = 13.sp,
-                            color = MaterialTheme.colorScheme.outline
+                            color = if (isOverTime) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.outline
                         )
                         if (task.remindTime != null) {
                             Icon(
