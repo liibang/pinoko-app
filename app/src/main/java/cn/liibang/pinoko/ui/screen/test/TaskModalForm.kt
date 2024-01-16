@@ -1,5 +1,6 @@
 package cn.liibang.pinoko.ui.screen.test
 
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.Orientation
@@ -74,12 +75,14 @@ import cn.liibang.pinoko.ui.screen.task.TaskViewModel
 import cn.liibang.pinoko.ui.support.Border
 import cn.liibang.pinoko.ui.support.border
 import cn.liibang.pinoko.ui.support.bottomElevation
+import cn.liibang.pinoko.ui.support.displayText
 import com.kizitonwose.calendar.compose.WeekCalendar
 import com.kizitonwose.calendar.compose.weekcalendar.WeekCalendarState
 import com.kizitonwose.calendar.compose.weekcalendar.rememberWeekCalendarState
 import com.kizitonwose.calendar.core.Week
 import com.kizitonwose.calendar.core.atStartOfMonth
 import com.kizitonwose.calendar.core.daysOfWeek
+import com.kizitonwose.calendar.core.yearMonth
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.launch
@@ -98,16 +101,11 @@ fun TaskModalForm(
     agendaViewModel: AgendaViewModel = viewModel(),
     taskViewModel: TaskViewModel = hiltViewModel()
 ) {
-    val tasks by agendaViewModel.tasks.collectAsState()
-    val selectedDay by agendaViewModel.selectedDay.collectAsState()
-    val inboxSize by agendaViewModel.inboxSize.collectAsState()
 
     Column(Modifier.fillMaxSize()) {
         XWeekCalendar(
-            selectedDay,
             agendaViewModel::changeSelectedDay,
             agendaViewModel::isEventOnDayOfWeek,
-            inboxSize
         )
         val rowHeight = 80.dp // 这里设置你想要的高度
         Column(
@@ -188,16 +186,15 @@ fun TaskModalForm(
 
 @Composable
 fun XWeekCalendar(
-    selectedDay: LocalDate,
+//    selectedDay: LocalDate,
     changeSelectedDay: (LocalDate) -> Unit,
     isEventOnDayOfWeek: (LocalDate) -> StateFlow<Boolean>,
-    inboxSize: Int
 ) {
     val now = LocalDate.now()
     val weekCalendarState = rememberWeekCalendarState(
         startDate = YearMonth.now().minusMonths(100).atStartOfMonth(),
         endDate = YearMonth.now().plusMonths(100).atEndOfMonth(),
-        firstVisibleWeekDate = selectedDay,
+        firstVisibleWeekDate = now,
         firstDayOfWeek = daysOfWeek(DayOfWeek.MONDAY).first()
     )
     val scope = rememberCoroutineScope()
@@ -223,17 +220,11 @@ fun XWeekCalendar(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 DayText(
-                    selectedWeek = rememberFirstVisibleWeekAfterScroll(
-                        now = now,
-                        state = weekCalendarState,
-                        changeSelectDay = changeSelectedDay,
-                        selectedDay = selectedDay
-                    ),
+                    selectedWeek = rememberFirstVisibleWeekAfterScroll(state = weekCalendarState),
                     now = now,
-                    selectedDay = selectedDay
                 )
                 Spacer(modifier = Modifier.weight(1f))
-                if (now != selectedDay) {
+                if (!weekCalendarState.firstVisibleWeek.days.map { it.date }.contains(now)) {
                     IconButton(modifier = Modifier.offset(y = ((-1.5).dp)), onClick = {
                         // 还要修改week TODO
                         scope.launch {
@@ -296,8 +287,8 @@ fun XWeekCalendar(
                             val hasEvent by isEventOnDayOfWeek(weekDay.date).collectAsState()
                             Day(
                                 dayText = weekDay.date.dayOfMonth.toString(),
-                                isSelected = selectedDay == weekDay.date,
-                                clickable = true,
+                                isSelected = false,
+                                clickable = false,
                                 onClick = { },
                                 isToday = weekDay.date == now,
                                 hasEvent = hasEvent,
@@ -337,43 +328,38 @@ fun DayOfWeek.displayText(): String {
 }
 
 @Composable
-private fun DayText(selectedWeek: Week, now: LocalDate, selectedDay: LocalDate) {
+private fun DayText(selectedWeek: Week, now: LocalDate) {
+    val firstDate = selectedWeek.days.first().date
+    val lastDate = selectedWeek.days.last().date
 
-    val monthText = selectedDay.month.getDisplayName(TextStyle.SHORT, Locale.CHINESE) + ", "
-    val dateTip = monthText + when {
-        selectedDay == now -> "今天"
-        now.minusDays(1) == selectedDay -> "昨天"
-        now.minusDays(2) == selectedDay -> "前天"
-        now.plusDays(1) == selectedDay -> "明天"
-        now.plusDays(2) == selectedDay -> "后天"
-        selectedDay.year == now.year -> {
-            val weeksBetween = Period.between(
-                now.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY)),
-                selectedWeek.days.first().date
-            ).days / 7
-            val monthsBetween = selectedDay.monthValue - now.monthValue
-            when {
-                monthsBetween == -1 -> "上个月"
-                monthsBetween == 1 -> "下个月"
-                monthsBetween < -1 -> "${-monthsBetween}个月前"
-                monthsBetween > 1 -> "${monthsBetween}个月后"
-                else -> {
-                    val dayOfWeekText = selectedDay.dayOfWeek.displayText()
-                    when {
-                        weeksBetween == -1 -> "上 $dayOfWeekText"
-                        weeksBetween == 1 -> "下 $dayOfWeekText"
-                        weeksBetween > 1 -> "${weeksBetween}周后"
-                        weeksBetween < -1 -> "${-weeksBetween}周前"
-                        else -> dayOfWeekText
-                    }
-                }
-            }
+    val between = selectedWeek.days.first().date.compareTo(now.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY)))
+
+    val weeksBetween = between / 7
+    Log.i(
+        "TEST",
+        "between: $between, weeksBetween: $weeksBetween"
+    )
+    val tip = when {
+        weeksBetween == 0 && between % 7 == 0 -> "本周"
+        weeksBetween == -1 -> "上周"
+        weeksBetween == 1 -> "下周"
+        firstDate.yearMonth == lastDate.yearMonth -> {
+            firstDate.yearMonth.displayText()
         }
-        else -> "${selectedDay.year}年"
+
+        firstDate.year == lastDate.year -> {
+            "${firstDate.month.displayText(short = false)} - ${lastDate.yearMonth.displayText()}"
+        }
+
+        else -> {
+            "${firstDate.yearMonth.displayText()} - ${lastDate.yearMonth.displayText()}"
+        }
     }
+
+
     // 解析当前天
     Text(
-        text = dateTip,
+        text = tip,
         fontWeight = FontWeight.Medium,
         fontSize = 20.sp,
         color = MaterialTheme.colorScheme.onSurface,
@@ -432,9 +418,6 @@ private fun Day(
 @Composable
 fun rememberFirstVisibleWeekAfterScroll(
     state: WeekCalendarState,
-    changeSelectDay: (LocalDate) -> Unit,
-    now: LocalDate,
-    selectedDay: LocalDate,
 ): Week {
     val visibleWeek = remember(state) { mutableStateOf(state.firstVisibleWeek) }
     LaunchedEffect(state) {
@@ -442,13 +425,6 @@ fun rememberFirstVisibleWeekAfterScroll(
             .filter { scrolling -> !scrolling }
             .collect {
                 visibleWeek.value = state.firstVisibleWeek
-                visibleWeek.value.days.map { it.date }.run {
-                    if (contains(now)) {
-                        changeSelectDay(selectedDay)
-                    } else {
-                        changeSelectDay(first())
-                    }
-                }
             }
     }
     return visibleWeek.value

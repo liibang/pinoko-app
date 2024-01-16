@@ -29,6 +29,11 @@ import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import java.time.DayOfWeek
+import java.time.Month
+import java.time.YearMonth
+import java.time.format.TextStyle
+import java.util.Locale
 import java.util.UUID
 
 fun Context.showToast(message: String, length: Int = Toast.LENGTH_LONG){
@@ -71,3 +76,18 @@ fun Modifier.clickableNoRipple(onClick: () -> Unit): Modifier =
     }
 
 
+
+fun YearMonth.displayText(short: Boolean = false): String {
+    return "${this.month.displayText(short = short)} ${this.year}"
+}
+
+fun Month.displayText(short: Boolean = true): String {
+    val style = if (short) TextStyle.SHORT else TextStyle.FULL
+    return getDisplayName(style, Locale.CHINESE)
+}
+
+fun DayOfWeek.displayText(uppercase: Boolean = false): String {
+    return getDisplayName(TextStyle.SHORT, Locale.CHINESE).let { value ->
+        if (uppercase) value.uppercase(Locale.CHINESE) else value
+    }
+}

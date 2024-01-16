@@ -27,6 +27,10 @@ class AgendaViewModel constructor(private val appDatabase: AppDatabase = AppData
     private val _selectedDay = MutableStateFlow(LocalDate.now())
     val selectedDay = _selectedDay.asStateFlow()
 
+
+//    private val _selectedWeek = MutableStateFlow(LocalDate.now())
+//    val selectedWeek = _selectedDay.asStateFlow()
+
     fun changeSelectedDay(day: LocalDate) {
         _selectedDay.value = day
     }
