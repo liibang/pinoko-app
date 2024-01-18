@@ -100,7 +100,7 @@ enum class EditMode() {
 fun TaskForm(
     id: String?,
     taskViewModel: TaskViewModel = hiltViewModel(),
-    categoryViewModel: CategoryViewModel = viewModel(),
+    categoryViewModel: CategoryViewModel = hiltViewModel(),
 ) {
 
     val editMode = if (id == null) EditMode.CREATE else EditMode.UPDATE

@@ -6,15 +6,24 @@ import cn.liibang.pinoko.data.AppDatabase
 import cn.liibang.pinoko.data.entity.TaskCategoryPO
 import cn.liibang.pinoko.model.TaskCategoryVO
 import cn.liibang.pinoko.ui.theme.CategoryColor
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.time.LocalDateTime
+import javax.inject.Inject
 
-val DEFAULT_CATEGORY_ALL = TaskCategoryVO(id = "0", name = "全部", color = CategoryColor.DEFAULT_BLUE.code, sort = -1,  LocalDateTime.MAX)
+val DEFAULT_CATEGORY_ALL = TaskCategoryVO(
+    id = "0",
+    name = "全部",
+    color = CategoryColor.DEFAULT_BLUE.code,
+    sort = -1,
+    LocalDateTime.MAX
+)
 
-class CategoryViewModel(private val appDataBase: AppDatabase = AppDatabase.getDatabase()) : ViewModel() {
+@HiltViewModel
+class CategoryViewModel @Inject constructor(private val appDataBase: AppDatabase) : ViewModel() {
 
     val taskCategories = appDataBase.taskCategoryDao()
         .selectAll()

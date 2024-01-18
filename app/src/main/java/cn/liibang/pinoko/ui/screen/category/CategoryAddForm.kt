@@ -41,6 +41,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import androidx.hilt.navigation.compose.hiltViewModel
 import cn.liibang.pinoko.data.entity.TaskCategoryPO
 import cn.liibang.pinoko.ui.component.XTextField
 import cn.liibang.pinoko.ui.support.generateUUID
@@ -57,7 +58,7 @@ fun CategoryAddForm(
     onDismissRequest: () -> Unit,
     onCreate: (String) -> Unit,
 ) {
-    val viewModel: CategoryViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
+    val viewModel = hiltViewModel<CategoryViewModel>()
 
     if (show) {
         var categoryName by remember {

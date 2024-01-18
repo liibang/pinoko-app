@@ -1,7 +1,6 @@
 package cn.liibang.pinoko.ui.screen.main
 
 import android.app.Activity
-import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -30,14 +29,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
@@ -51,7 +48,8 @@ import cn.liibang.pinoko.ui.screen.agenda.AgendaScreen
 import cn.liibang.pinoko.ui.screen.task.TaskForm
 import cn.liibang.pinoko.ui.screen.stats.StatsScreen
 import cn.liibang.pinoko.ui.screen.task.TaskScreen
-import cn.liibang.pinoko.ui.screen.test.TaskModalForm
+import cn.liibang.pinoko.ui.screen.agenda.calendar.WeekScheduleView
+import cn.liibang.pinoko.ui.screen.test.TimeTableManager
 import cn.liibang.pinoko.ui.theme.AppTheme
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
@@ -70,10 +68,10 @@ val ROUTERS_FOR_MENU = listOf(
 sealed class Router(val route: String, val metadata: MetaData) {
     object Agenda : Router("Agenda", metadata = MetaData("我的日程", Icons.Filled.Splitscreen))
     object Task : Router("Task", metadata = MetaData("事件清单", Icons.Default.TaskAlt))
-    object Focus : Router("Focus", metadata = MetaData("番茄专注", Icons.Default.EditCalendar))
+    object Focus : Router("Focus", metadata = MetaData("番茄专注", Icons.Outlined.Timer))
     object SchoolTimeTable : Router(
         "SchoolTimeTable",
-        metadata = MetaData(name = "课表管理", icon = Icons.Outlined.Timer)
+        metadata = MetaData(name = "课表管理", icon = Icons.Default.EditCalendar)
     )
 
     object Stats : Router("Stats", metadata = MetaData("时间报告", Icons.Default.LegendToggle))
@@ -140,7 +138,9 @@ fun BestScreen(mainViewModel: MainViewModel = hiltViewModel()) {
                 bottomBar = {
                     XBottomBar(
                         showMenu = { isShowModalMenu = true },
-                        currentRoute = mainViewModel.currentRoute
+                        currentRoute = mainViewModel.currentRoute,
+                        switchAgendaDisplayMode = mainViewModel::switchAgendaDisplayMode,
+                        agendaDisplayMode = mainViewModel.agendaDisplayMode
                     )
                 },
                 backgroundColor = MaterialTheme.colorScheme.surfaceColorAtElevation(0.1.dp)
@@ -154,10 +154,12 @@ fun BestScreen(mainViewModel: MainViewModel = hiltViewModel()) {
 //                enterTransition = { EnterTransition.None },
                     exitTransition = { ExitTransition.None },
                 ) {
-                    composable(Router.Agenda.route) { AgendaScreen() }
+                    composable(Router.Agenda.route) { AgendaScreen(mainViewModel.agendaDisplayMode) }
                     composable(Router.Task.route) { TaskScreen() }
-                    composable(Router.SchoolTimeTable.route) { }
-                    composable(Router.Focus.route) { TaskModalForm() }
+                    composable(Router.SchoolTimeTable.route) {
+                        TimeTableManager()
+                    }
+                    composable(Router.Focus.route) { }
                     composable(Router.Stats.route) { StatsScreen() }
                     composable(
                         route = "${Router.TaskForm.route}?id={id}",

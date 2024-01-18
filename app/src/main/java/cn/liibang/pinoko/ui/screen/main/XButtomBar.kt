@@ -8,6 +8,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CalendarViewWeek
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.BottomAppBar
+import androidx.compose.material.icons.filled.Splitscreen
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -15,9 +16,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
+import kotlin.reflect.KProperty0
 
 @Composable
-fun XBottomBar(showMenu: () -> Unit, currentRoute: String) {
+fun XBottomBar(showMenu: () -> Unit, currentRoute: String, agendaDisplayMode: AgendaDisplayMode, switchAgendaDisplayMode: () -> Unit) {
 
     when(currentRoute) {
         Router.Agenda.route -> {
@@ -38,11 +40,11 @@ fun XBottomBar(showMenu: () -> Unit, currentRoute: String) {
                 }
                 Spacer(modifier = Modifier.weight(1f))
                 IconButton(
-                    onClick = { },
+                    onClick = { switchAgendaDisplayMode() },
                     modifier = Modifier.padding(end = 3.dp)
                 ) {
                     Icon(
-                        imageVector = Icons.Default.CalendarViewWeek,
+                        imageVector = if (agendaDisplayMode == AgendaDisplayMode.CALENDAR) Icons.Default.CalendarViewWeek else Icons.Default.Splitscreen,
                         contentDescription = "",
                         tint = MaterialTheme.colorScheme.onPrimary
                     )

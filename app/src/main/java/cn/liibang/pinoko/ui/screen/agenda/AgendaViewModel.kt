@@ -1,5 +1,8 @@
 package cn.liibang.pinoko.ui.screen.agenda
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import cn.liibang.pinoko.data.AppDatabase
@@ -20,16 +23,13 @@ sealed class AgendaEvent {
     data class ChangeSelectedDay(val newSelectedDay: LocalDate) : AgendaEvent()
 }
 
+
 //@HiltViewModel
 class AgendaViewModel constructor(private val appDatabase: AppDatabase = AppDatabase.getDatabase()) :
     ViewModel() {
 
     private val _selectedDay = MutableStateFlow(LocalDate.now())
     val selectedDay = _selectedDay.asStateFlow()
-
-
-//    private val _selectedWeek = MutableStateFlow(LocalDate.now())
-//    val selectedWeek = _selectedDay.asStateFlow()
 
     fun changeSelectedDay(day: LocalDate) {
         _selectedDay.value = day
