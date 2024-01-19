@@ -54,7 +54,7 @@ import cn.liibang.pinoko.ui.screen.category.DEFAULT_CATEGORY_ALL
 
 
 @Composable
-fun TaskScreen(todoViewModel: TaskViewModel = hiltViewModel(), categoryViewModel: CategoryViewModel = viewModel()) {
+fun TaskScreen(todoViewModel: TaskViewModel = hiltViewModel(), categoryViewModel: CategoryViewModel = hiltViewModel()) {
 
     val taskCategories by categoryViewModel.taskCategories.collectAsState()
     val selectedCategoryID by todoViewModel.selectedCategoryID.collectAsState()
