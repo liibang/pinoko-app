@@ -16,7 +16,6 @@ import java.time.LocalDate
 @Dao
 interface TaskDao {
 
-
     @Query(
         """
         SELECT

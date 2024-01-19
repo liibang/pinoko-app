@@ -1,6 +1,7 @@
 package cn.liibang.pinoko.data
 
 import androidx.room.TypeConverter
+import cn.liibang.pinoko.data.entity.OptMode
 import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -42,6 +43,16 @@ class Converters {
     @TypeConverter
     fun dateToTimestamp(date: LocalDate?): Long? {
         return date?.atStartOfDay(ZoneOffset.ofHours(8))?.toInstant()?.toEpochMilli()
+    }
+
+    @TypeConverter
+    fun optModeToInt(optMode: OptMode): Int {
+        return optMode.code
+    }
+
+    @TypeConverter
+    fun intToOptMode(modeCode: Int): OptMode {
+        return OptMode.values().find { it.code == modeCode }!!
     }
 
 }
