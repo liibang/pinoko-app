@@ -1,4 +1,4 @@
-package cn.liibang.pinoko.ui.screen.form
+package cn.liibang.pinoko.ui.component
 
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
