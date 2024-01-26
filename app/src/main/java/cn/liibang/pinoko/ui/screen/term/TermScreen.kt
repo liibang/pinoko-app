@@ -89,7 +89,7 @@ private fun TermCard(termPO: TermPO, toEdit: () -> Unit) {
     val endDate = startDate.plusWeeks(termPO.weeks.toLong())
 
     // 判断当前日期是否在学期开始和结束日期之间
-    val tipOne = if (currentDate.isBefore(startDate)) {
+    val tip = if (currentDate.isBefore(startDate)) {
         "学期未开始"
     } else if (currentDate.isAfter(endDate)) {
         "学期已经结束"
@@ -107,11 +107,12 @@ private fun TermCard(termPO: TermPO, toEdit: () -> Unit) {
             RoundingMode.UP
         ) * 100.toBigDecimal()).setScale(0, RoundingMode.UNNECESSARY).toString()
 
-        "学期已过：$passedPercentage%"
+        // 计算剩余的天数
+        val remainingDays = ChronoUnit.DAYS.between(currentDate, endDate)
+        "学期已过：$passedPercentage%，剩余${remainingDays}天"
     }
 
-    // 计算剩余的天数
-    val remainingDays = ChronoUnit.DAYS.between(currentDate, endDate)
+
 
     Card(
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceDim),
@@ -140,7 +141,7 @@ private fun TermCard(termPO: TermPO, toEdit: () -> Unit) {
                 }
                 Row {
                     Text(
-                        text = "$tipOne，剩余${remainingDays}天",
+                        text = tip,
                         color = Color.Gray,
                         fontSize = 12.5.sp,
                         fontWeight = FontWeight.Medium
