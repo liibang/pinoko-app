@@ -56,6 +56,8 @@ import cn.liibang.pinoko.ui.component.XTextField
 import cn.liibang.pinoko.ui.screen.form.OptButton
 import cn.liibang.pinoko.ui.screen.main.LocalNavController
 import cn.liibang.pinoko.ui.screen.task.EditMode
+import cn.liibang.pinoko.ui.support.toDateMillis
+import cn.liibang.pinoko.ui.support.toMonthMillis
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.ZoneId
@@ -227,8 +229,8 @@ fun TermForm(id: String?, termViewModel: TermViewModel = hiltViewModel()) {
             if (isShowDatePicker) {
                 val dateState =
                     rememberDatePickerState(selectableDates = object : SelectableDates {})
-                dateState.selectedDateMillis = formState.startDate.atStartOfDay(ZoneId.of("UTC"))
-                    .toInstant().toEpochMilli()
+                dateState.selectedDateMillis = formState.startDate.toDateMillis()
+                dateState.displayedMonthMillis = formState.startDate.toMonthMillis()
                 DatePickerDialog(onDismissRequest = { isShowDatePicker = false }, confirmButton = {
                     Row {
                         TextButton(onClick = { isShowDatePicker = false }) {

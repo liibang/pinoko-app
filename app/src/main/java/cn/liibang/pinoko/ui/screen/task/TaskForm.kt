@@ -82,6 +82,8 @@ import cn.liibang.pinoko.ui.screen.category.CategoryViewModel
 import cn.liibang.pinoko.ui.screen.form.OptButton
 import cn.liibang.pinoko.ui.screen.main.LocalNavController
 import cn.liibang.pinoko.ui.support.showToast
+import cn.liibang.pinoko.ui.support.toDateMillis
+import cn.liibang.pinoko.ui.support.toMonthMillis
 import cn.liibang.pinoko.ui.theme.categoryColor
 import java.time.LocalDateTime
 import java.time.LocalTime
@@ -215,7 +217,10 @@ fun TaskForm(
         // ===================日期
         Column {
             val dateState = rememberDatePickerState(selectableDates = object : SelectableDates {})
-            dateState.selectedDateMillis = formState.dueDate?.atStartOfDay(ZoneId.of("UTC"))?.toInstant()?.toEpochMilli()
+            dateState.selectedDateMillis = formState.dueDate?.toDateMillis()
+            formState.dueDate?.let {
+                dateState.displayedMonthMillis = formState.dueDate!!.toMonthMillis()
+            }
             var isShow by remember { mutableStateOf(false) }
             val dateText =
                 formState.dueDate?.format(DateTimeFormatter.ofPattern("yyyy/MM/dd"))

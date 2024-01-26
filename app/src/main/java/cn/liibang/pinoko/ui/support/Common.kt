@@ -1,42 +1,29 @@
 package cn.liibang.pinoko.ui.support
 
 import android.content.Context
-import android.graphics.DashPathEffect
-import android.graphics.Path
 import android.widget.Toast
-import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.shape.GenericShape
-import androidx.compose.material.ContentAlpha
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.composed
-import androidx.compose.ui.draw.DrawModifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Paint
-import androidx.compose.ui.graphics.PaintingStyle
-import androidx.compose.ui.graphics.RectangleShape
-import androidx.compose.ui.graphics.Shape
-import androidx.compose.ui.graphics.SolidColor
-import androidx.compose.ui.graphics.drawscope.ContentDrawScope
 import androidx.compose.ui.graphics.drawscope.clipRect
-import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
-import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import java.time.DayOfWeek
+import java.time.LocalDate
 import java.time.Month
 import java.time.YearMonth
+import java.time.ZoneId
 import java.time.format.TextStyle
 import java.util.Locale
 import java.util.UUID
 
-fun Context.showToast(message: String, length: Int = Toast.LENGTH_LONG){
+fun Context.showToast(message: String, length: Int = Toast.LENGTH_LONG) {
     Toast.makeText(this, message, length).show()
 }
 
@@ -48,7 +35,6 @@ fun Modifier.bottomShadow(shadow: Dp) =
             lineTo(0f, Float.MAX_VALUE)
         })
         .shadow(shadow)
-
 
 
 fun Modifier.bottomElevation(): Modifier = this.then(Modifier.drawWithContent {
@@ -76,7 +62,6 @@ fun Modifier.clickableNoRipple(onClick: () -> Unit): Modifier =
     }
 
 
-
 fun YearMonth.displayText(short: Boolean = false): String {
     return "${this.month.displayText(short = short)} ${this.year}"
 }
@@ -91,3 +76,8 @@ fun DayOfWeek.displayText(uppercase: Boolean = false): String {
         if (uppercase) value.uppercase(Locale.CHINESE) else value
     }
 }
+
+fun LocalDate.toDateMillis() = this.atStartOfDay(ZoneId.of("UTC")).toInstant().toEpochMilli()
+
+fun LocalDate.toMonthMillis() =
+    this.withDayOfMonth(1).atStartOfDay().atZone(ZoneId.of("UTC")).toInstant().toEpochMilli()
