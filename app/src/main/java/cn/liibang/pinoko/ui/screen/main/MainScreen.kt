@@ -45,6 +45,7 @@ import android.Manifest
 import android.os.Build
 import androidx.annotation.RequiresApi
 import cn.liibang.pinoko.ui.screen.agenda.AgendaScreen
+import cn.liibang.pinoko.ui.screen.course.CourseForm
 import cn.liibang.pinoko.ui.screen.task.TaskForm
 import cn.liibang.pinoko.ui.screen.stats.StatsScreen
 import cn.liibang.pinoko.ui.screen.task.TaskScreen
@@ -95,6 +96,9 @@ sealed class SubRouter(val route: String) {
         fun routeWithParam(value: String) = "$route?id=$value"
     }
 
+    object CourseForm : SubRouter("CourseForm") {
+        fun routeWithParam(value: String) = "$route?id=$value"
+    }
 }
 
 
@@ -190,6 +194,11 @@ fun BestScreen(mainViewModel: MainViewModel = hiltViewModel()) {
                         route = "${SubRouter.TermForm.route}?id={id}",
                     ) {
                         TermForm(id = it.arguments?.getString("id"))
+                    }
+                    composable(
+                        route = "${SubRouter.CourseForm.route}?id={id}",
+                    ) {
+                        CourseForm(id = it.arguments?.getString("id"))
                     }
                 }
                 // 导航菜单

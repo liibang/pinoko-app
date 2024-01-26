@@ -39,7 +39,7 @@ fun XFab(currentRouter: String) {
                     SpeedDialData(
                         label = "课程",
                         painter = rememberVectorPainter(image = Icons.Default.MenuBook),
-                        onClick = {}
+                        onClick = { navController.navigate(SubRouter.CourseForm.route) }
                     )
                 ),
             )
