@@ -1,4 +1,4 @@
-package cn.liibang.pinoko.ui.screen.test
+package cn.liibang.pinoko.ui.screen.term
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -7,8 +7,6 @@ import cn.liibang.pinoko.data.StringUUID
 import cn.liibang.pinoko.data.entity.TermPO
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject

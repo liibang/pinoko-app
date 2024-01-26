@@ -1,4 +1,4 @@
-package cn.liibang.pinoko.ui.screen.test
+package cn.liibang.pinoko.ui.screen.term
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background

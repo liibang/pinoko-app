@@ -48,8 +48,8 @@ import cn.liibang.pinoko.ui.screen.agenda.AgendaScreen
 import cn.liibang.pinoko.ui.screen.task.TaskForm
 import cn.liibang.pinoko.ui.screen.stats.StatsScreen
 import cn.liibang.pinoko.ui.screen.task.TaskScreen
-import cn.liibang.pinoko.ui.screen.test.TermForm
-import cn.liibang.pinoko.ui.screen.test.TermScreen
+import cn.liibang.pinoko.ui.screen.term.TermForm
+import cn.liibang.pinoko.ui.screen.term.TermScreen
 import cn.liibang.pinoko.ui.theme.AppTheme
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
