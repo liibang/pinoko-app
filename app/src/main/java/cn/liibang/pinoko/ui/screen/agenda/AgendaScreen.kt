@@ -1,15 +1,9 @@
 package cn.liibang.pinoko.ui.screen.agenda
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutHorizontally
-import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
@@ -33,7 +27,7 @@ import java.time.YearMonth
 
 @Composable
 fun AgendaScreen(
-    displayMode: AgendaDisplayMode,
+    agendaDisplayMode: AgendaDisplayMode,
     agendaViewModel: AgendaViewModel = viewModel(),
     taskViewModel: TaskViewModel = hiltViewModel()
 ) {
@@ -63,7 +57,7 @@ fun AgendaScreen(
                     .background(MaterialTheme.colorScheme.surfaceDim)
             ) {
                 AnimatedVisibility(
-                    visible = displayMode == AgendaDisplayMode.CALENDAR,
+                    visible = agendaDisplayMode == AgendaDisplayMode.CALENDAR,
                     enter = slideInHorizontally() ,
 //                    exit = slideOutHorizontally(),
                 ) {
@@ -78,7 +72,7 @@ fun AgendaScreen(
                 }
 
                 AnimatedVisibility(
-                    visible = displayMode != AgendaDisplayMode.CALENDAR,
+                    visible = agendaDisplayMode != AgendaDisplayMode.CALENDAR,
                     enter = slideInHorizontally() ,
 //                    exit = slideOutHorizontally(),
                 ) {
@@ -90,7 +84,7 @@ fun AgendaScreen(
 
             }
         }
-        if (displayMode == AgendaDisplayMode.CALENDAR) {
+        if (agendaDisplayMode == AgendaDisplayMode.CALENDAR) {
             CalendarContent(tasks, taskViewModel::updateCompletedStatus, taskViewModel::delete)
         } else {
             ScheduleContent()

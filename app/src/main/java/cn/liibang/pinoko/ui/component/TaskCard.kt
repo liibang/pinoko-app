@@ -32,7 +32,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
@@ -42,14 +41,12 @@ import cn.liibang.pinoko.data.StringUUID
 import cn.liibang.pinoko.model.TaskVO
 import cn.liibang.pinoko.ui.constant.priorityColor
 import cn.liibang.pinoko.ui.screen.main.LocalNavController
-import cn.liibang.pinoko.ui.screen.main.Router
+import cn.liibang.pinoko.ui.screen.main.SubRouter
 import cn.liibang.pinoko.ui.support.Border
 import cn.liibang.pinoko.ui.support.border
 import cn.liibang.pinoko.ui.theme.categoryColor
-import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
-import kotlin.reflect.KFunction1
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -79,7 +76,7 @@ fun TaskCard(
     ) {
         Row(
             modifier = Modifier
-                .clickable { navController.navigate(Router.TaskForm.route + "?id=" + task.id) }
+                .clickable { navController.navigate(SubRouter.TaskForm.routeWithParam(task.id)) }
                 .background(MaterialTheme.colorScheme.surfaceDim)
                 .border(
                     start = Border(
@@ -168,7 +165,7 @@ fun TaskCard(
                         )
                         DropdownMenuItem(
                             text = { Text("编辑", fontWeight = FontWeight.SemiBold) },
-                            onClick = { navController.navigate(Router.TaskForm.route + "?id=" + task.id) },
+                            onClick = { navController.navigate(SubRouter.TaskForm.routeWithParam(task.id)) },
                         )
                         DropdownMenuItem(
                             text = { Text("删除", fontWeight = FontWeight.SemiBold) },
@@ -177,10 +174,7 @@ fun TaskCard(
                     }
                 }
             }
-
         }
-
-
     }
 
 

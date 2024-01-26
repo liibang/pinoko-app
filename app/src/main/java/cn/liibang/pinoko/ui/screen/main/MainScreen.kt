@@ -48,8 +48,8 @@ import cn.liibang.pinoko.ui.screen.agenda.AgendaScreen
 import cn.liibang.pinoko.ui.screen.task.TaskForm
 import cn.liibang.pinoko.ui.screen.stats.StatsScreen
 import cn.liibang.pinoko.ui.screen.task.TaskScreen
-import cn.liibang.pinoko.ui.screen.agenda.calendar.WeekScheduleView
-import cn.liibang.pinoko.ui.screen.test.TimeTableManager
+import cn.liibang.pinoko.ui.screen.test.TermForm
+import cn.liibang.pinoko.ui.screen.test.TermScreen
 import cn.liibang.pinoko.ui.theme.AppTheme
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
@@ -57,27 +57,24 @@ import com.google.accompanist.permissions.rememberPermissionState
 import kotlinx.coroutines.launch
 
 
-val ROUTERS_FOR_MENU = listOf(
-    Router.Agenda,
-    Router.Task,
-    Router.SchoolTimeTable,
-    Router.Focus,
-    Router.Stats
+val ROUTERS_FOR_MENUS = listOf(
+    MainRouter.Agenda,
+    MainRouter.Task,
+    MainRouter.SchoolTimeTable,
+    MainRouter.Focus,
+    MainRouter.Stats
 )
 
-sealed class Router(val route: String, val metadata: MetaData) {
-    object Agenda : Router("Agenda", metadata = MetaData("我的日程", Icons.Filled.Splitscreen))
-    object Task : Router("Task", metadata = MetaData("事件清单", Icons.Default.TaskAlt))
-    object Focus : Router("Focus", metadata = MetaData("番茄专注", Icons.Outlined.Timer))
-    object SchoolTimeTable : Router(
+sealed class MainRouter(val route: String, val metadata: MetaData) {
+    object Agenda : MainRouter("Agenda", metadata = MetaData("我的日程", Icons.Filled.Splitscreen))
+    object Task : MainRouter("Task", metadata = MetaData("事件清单", Icons.Default.TaskAlt))
+    object Focus : MainRouter("Focus", metadata = MetaData("番茄专注", Icons.Outlined.Timer))
+    object SchoolTimeTable : MainRouter(
         "SchoolTimeTable",
-        metadata = MetaData(name = "课表管理", icon = Icons.Default.EditCalendar)
+        metadata = MetaData(name = "学期管理", icon = Icons.Default.EditCalendar)
     )
 
-    object Stats : Router("Stats", metadata = MetaData("时间报告", Icons.Default.LegendToggle))
-
-    object TaskForm :
-        Router("TaskForm", metadata = MetaData("事件详情", Icons.Default.LegendToggle))
+    object Stats : MainRouter("Stats", metadata = MetaData("时间报告", Icons.Default.LegendToggle))
 
 //    companion object  {
 //        fun of(route: String) = ROUTERS_FOR_MENU.find { it.route ==  route}!!
@@ -86,6 +83,20 @@ sealed class Router(val route: String, val metadata: MetaData) {
     // 格式
     data class MetaData(val name: String, val icon: ImageVector?)
 }
+
+
+sealed class SubRouter(val route: String) {
+
+    object TaskForm : SubRouter("TaskForm") {
+        fun routeWithParam(value: String) = "$route?id=$value"
+    }
+
+    object TermForm : SubRouter("TermForm") {
+        fun routeWithParam(value: String) = "$route?id=$value"
+    }
+
+}
+
 
 
 val LocalNavController = compositionLocalOf<NavController> { error("No NavController found!") }
@@ -119,7 +130,7 @@ fun BestScreen(mainViewModel: MainViewModel = hiltViewModel()) {
         val surfaceDim = MaterialTheme.colorScheme.surfaceDim.toArgb()
 
         navController.addOnDestinationChangedListener { controller, destination, arguments ->
-            if (destination.route == Router.Agenda.route) {
+            if (destination.route == MainRouter.Agenda.route) {
                 window.statusBarColor = surfaceDim
             } else {
                 window.statusBarColor = surface
@@ -134,35 +145,37 @@ fun BestScreen(mainViewModel: MainViewModel = hiltViewModel()) {
                     XFab(currentRouter = mainViewModel.currentRoute)
                 },
                 isFloatingActionButtonDocked = true,
-                floatingActionButtonPosition = FabPosition.Center,
+                floatingActionButtonPosition = when(mainViewModel.currentRoute) {
+                    MainRouter.Agenda.route -> FabPosition.Center
+                    MainRouter.Task.route -> FabPosition.Center
+                    else -> FabPosition.End
+                },
                 bottomBar = {
                     XBottomBar(
                         showMenu = { isShowModalMenu = true },
-                        currentRoute = mainViewModel.currentRoute,
-                        switchAgendaDisplayMode = mainViewModel::switchAgendaDisplayMode,
-                        agendaDisplayMode = mainViewModel.agendaDisplayMode
+                        viewModel = mainViewModel
                     )
                 },
                 backgroundColor = MaterialTheme.colorScheme.surfaceColorAtElevation(0.1.dp)
             ) { padding ->
                 NavHost(
                     navController = navController,
-                    startDestination = Router.Agenda.route,
+                    startDestination = MainRouter.Agenda.route,
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(bottom = padding.calculateBottomPadding()),
 //                enterTransition = { EnterTransition.None },
                     exitTransition = { ExitTransition.None },
                 ) {
-                    composable(Router.Agenda.route) { AgendaScreen(mainViewModel.agendaDisplayMode) }
-                    composable(Router.Task.route) { TaskScreen() }
-                    composable(Router.SchoolTimeTable.route) {
-                        TimeTableManager()
+                    composable(MainRouter.Agenda.route) { AgendaScreen(mainViewModel.agendaDisplayMode) }
+                    composable(MainRouter.Task.route) { TaskScreen() }
+                    composable(MainRouter.SchoolTimeTable.route) {
+                        TermScreen()
                     }
-                    composable(Router.Focus.route) { }
-                    composable(Router.Stats.route) { StatsScreen() }
+                    composable(MainRouter.Focus.route) { }
+                    composable(MainRouter.Stats.route) { StatsScreen() }
                     composable(
-                        route = "${Router.TaskForm.route}?id={id}",
+                        route = "${SubRouter.TaskForm.route}?id={id}",
                         enterTransition = {
                             scaleIn(
                                 animationSpec = tween(220, delayMillis = 90),
@@ -172,6 +185,11 @@ fun BestScreen(mainViewModel: MainViewModel = hiltViewModel()) {
                         exitTransition = { ExitTransition.None },
                     ) {
                         TaskForm(it.arguments?.getString("id"))
+                    }
+                    composable(
+                        route = "${SubRouter.TermForm.route}?id={id}",
+                    ) {
+                        TermForm(id = it.arguments?.getString("id"))
                     }
                 }
                 // 导航菜单

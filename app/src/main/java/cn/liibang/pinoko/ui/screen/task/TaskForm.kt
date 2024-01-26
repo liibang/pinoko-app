@@ -1,12 +1,10 @@
 package cn.liibang.pinoko.ui.screen.task
 
 import android.widget.Toast
-import androidx.compose.foundation.Indication
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.scrollable
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -63,7 +61,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
@@ -73,10 +70,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.viewmodel.compose.viewModel
 import cn.liibang.pinoko.data.entity.TaskPO
 import cn.liibang.pinoko.model.TaskCategoryVO
 import cn.liibang.pinoko.toLocalDate
+import cn.liibang.pinoko.toTimestamp
 import cn.liibang.pinoko.ui.component.XTextField
 import cn.liibang.pinoko.ui.constant.Priority
 import cn.liibang.pinoko.ui.constant.priorityColor
@@ -88,6 +85,7 @@ import cn.liibang.pinoko.ui.support.showToast
 import cn.liibang.pinoko.ui.theme.categoryColor
 import java.time.LocalDateTime
 import java.time.LocalTime
+import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 
 enum class EditMode() {
@@ -217,6 +215,7 @@ fun TaskForm(
         // ===================日期
         Column {
             val dateState = rememberDatePickerState(selectableDates = object : SelectableDates {})
+            dateState.selectedDateMillis = formState.dueDate?.atStartOfDay(ZoneId.of("UTC"))?.toInstant()?.toEpochMilli()
             var isShow by remember { mutableStateOf(false) }
             val dateText =
                 formState.dueDate?.format(DateTimeFormatter.ofPattern("yyyy/MM/dd"))
@@ -239,7 +238,7 @@ fun TaskForm(
                         }
                         TextButton(onClick = {
                             formState =
-                                formState.copy(dueDate = dateState.selectedDateMillis.toLocalDate())
+                                formState.copy(dueDate = dateState.selectedDateMillis?.toLocalDate())
                             isShow = false
                         }) {
                             Text(text = "确定")
@@ -265,8 +264,8 @@ fun TaskForm(
                 cleanValue = { formState = formState.copy(dueTime = null, reminderTime = null) }
             )
             if (isShow) {
-                val now = LocalTime.now()
-                val timeState = rememberTimePickerState(now.hour, now.minute, true)
+                val selectedDueTime = if (formState.dueTime != null) formState.dueTime!! else LocalTime.now()
+                val timeState = rememberTimePickerState(selectedDueTime.hour, selectedDueTime.minute, true)
                 Dialog(onDismissRequest = { isShow = false }) {
                     Column(
                         modifier = Modifier
@@ -369,7 +368,7 @@ fun TaskForm(
             // 提醒时间滑块（弹窗）
             if (enabled) {
                 ReminderPicker(
-                    isShowDialog,
+                    isShow = isShowDialog,
                     onDismissRequest = { isShowDialog = false },
                     dueDateTime = formState.dueDate!!.atTime(formState.dueTime),
                     updateReminderTime = { formState = formState.copy(reminderTime = it) }

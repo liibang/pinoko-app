@@ -8,20 +8,23 @@ import androidx.room.TypeConverters
 import androidx.sqlite.db.SupportSQLiteDatabase
 import cn.liibang.pinoko.data.dao.TaskCategoryDao
 import cn.liibang.pinoko.data.dao.TaskDao
+import cn.liibang.pinoko.data.dao.TermDao
 
 import cn.liibang.pinoko.data.entity.TaskCategoryPO
 import cn.liibang.pinoko.data.entity.TaskPO
+import cn.liibang.pinoko.data.entity.TermPO
 
 @Database(
     entities =
     [
-        TaskPO::class, TaskCategoryPO::class
-    ], version = 5
+        TaskPO::class, TaskCategoryPO::class, TermPO::class
+    ], version = 6
 )
 @TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun taskDao(): TaskDao
     abstract fun taskCategoryDao(): TaskCategoryDao
+    abstract fun termDao(): TermDao
 
     companion object {
         @Volatile

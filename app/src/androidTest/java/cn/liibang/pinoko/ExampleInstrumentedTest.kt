@@ -22,3 +22,9 @@ class ExampleInstrumentedTest {
         assertEquals("cn.liibang.pinoko", appContext.packageName)
     }
 }
+
+sealed interface Breaker{
+
+
+
+}

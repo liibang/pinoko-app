@@ -20,7 +20,7 @@ fun XFab(currentRouter: String) {
     val navController = LocalNavController.current
 
     when (currentRouter) {
-        Router.Agenda.route -> {
+        MainRouter.Agenda.route -> {
             SpeedDialFloatingActionButton(
                 modifier = Modifier,
                 initialExpanded = false,
@@ -34,7 +34,7 @@ fun XFab(currentRouter: String) {
                     SpeedDialData(
                         label = "事件",
                         painter = rememberVectorPainter(image = Icons.Default.TaskAlt),
-                        onClick = { navController.navigate(Router.TaskForm.route) }
+                        onClick = { navController.navigate(SubRouter.TaskForm.route) }
                     ),
                     SpeedDialData(
                         label = "课程",
@@ -44,17 +44,13 @@ fun XFab(currentRouter: String) {
                 ),
             )
         }
-        Router.Task.route -> {
-            androidx.compose.material.FloatingActionButton(
-                onClick = { navController.navigate(Router.TaskForm.route) },
-                backgroundColor = MaterialTheme.colorScheme.tertiaryContainer
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Add,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onTertiaryContainer
-                )
-            }
+
+        MainRouter.Task.route -> {
+            FabTemplate { navController.navigate(SubRouter.TaskForm.route) }
+        }
+
+        MainRouter.SchoolTimeTable.route -> {
+            FabTemplate { navController.navigate(SubRouter.TermForm.route) }
         }
 
         else -> {
@@ -62,5 +58,18 @@ fun XFab(currentRouter: String) {
         }
     }
 
+}
 
+@Composable
+private fun FabTemplate(onClick: () -> Unit) {
+    androidx.compose.material.FloatingActionButton(
+        onClick = onClick,
+        backgroundColor = MaterialTheme.colorScheme.tertiaryContainer
+    ) {
+        Icon(
+            imageVector = Icons.Default.Add,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onTertiaryContainer
+        )
+    }
 }

@@ -52,7 +52,7 @@ import coil.compose.SubcomposeAsyncImageContent
 fun ModalMenu(
     modalBottomSheetState: SheetState,
     onDismissRequest: () -> Unit,
-    navigateToNewPage: (Router) -> Unit,
+    navigateToNewPage: (MainRouter) -> Unit,
     currentRoute: String
 ) {
 
@@ -64,7 +64,7 @@ fun ModalMenu(
         Column(Modifier.padding(horizontal = 20.dp)) {
             InteractiveItem()
             Spacer(modifier = Modifier.height(18.dp))
-            ROUTERS_FOR_MENU.forEach {
+            ROUTERS_FOR_MENUS.forEach {
                 val isSelected = currentRoute == it.route
                 ListItem(
                     colors = ListItemDefaults.colors(containerColor = if (isSelected) MaterialTheme.colorScheme.secondaryContainer else MaterialTheme.colorScheme.surfaceDim),

@@ -1,4 +1,4 @@
-package cn.liibang.pinoko.ui.screen.task
+package cn.liibang.pinoko.ui.screen.test
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
@@ -41,23 +41,16 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import cn.liibang.pinoko.ui.theme.XShape
-import java.time.LocalDateTime
+import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
-enum class TimeUnit(private val desc: String) {
-    MINUTE("分钟"), HOUR("小时"), DAY("天"), WEEK("周"), ;
-
-    override fun toString(): String {
-        return desc
-    }
-}
-
 @Composable
-fun ReminderPicker(
+fun WeekNumberPicker(
     isShow: Boolean,
     onDismissRequest: () -> Unit,
-    dueDateTime: LocalDateTime,
-    updateReminderTime: (LocalDateTime) -> Unit
+    startDate: LocalDate,
+    onSelect: (Int) -> Unit,
+    initWeeks: Int
 ) {
     if (isShow) {
         // ====properties====
@@ -65,23 +58,9 @@ fun ReminderPicker(
         val width = 50
         val itemHeight = 70
 
-        var timeUnit by remember {
-            mutableStateOf(TimeUnit.MINUTE)
-        }
         var number by remember {
-            mutableIntStateOf(1)
+            mutableIntStateOf(initWeeks)
         }
-        val now = LocalDateTime.now()
-
-        val numberOfLong = number.toLong()
-        val selectedDateTime = when (timeUnit) {
-            TimeUnit.MINUTE -> dueDateTime.minusMinutes(numberOfLong)
-            TimeUnit.HOUR -> dueDateTime.minusHours(numberOfLong)
-            TimeUnit.DAY -> dueDateTime.minusDays(numberOfLong)
-            TimeUnit.WEEK -> dueDateTime.minusWeeks(numberOfLong)
-        }
-
-        val savable = selectedDateTime.isBefore(dueDateTime) && selectedDateTime.isAfter(now)
 
         Dialog(
             onDismissRequest = onDismissRequest,
@@ -96,47 +75,28 @@ fun ReminderPicker(
                     .padding(16.dp)
             ) {
 
-                Text(text = "自定义提醒", fontWeight = FontWeight.SemiBold)
+                Text(text = "设置周数", fontWeight = FontWeight.SemiBold)
 
-                Column(Modifier.padding(horizontal = 10.dp)) {
-                    Row(
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        InfiniteCircularList(
-                            width = width.dp,
-                            itemHeight = itemHeight.dp,
-                            items = (1..99).toList(),
-                            initialItem = number,
-                            textStyle = TextStyle(fontSize = textSize.sp),
-                            textColor = Color.LightGray,
-                            selectedTextColor = Color.Black,
-                            onItemSelected = { i, item ->
-                                number = item
-                            }
-                        )
-                        InfiniteCircularList(
-                            width = width.dp,
-                            itemHeight = itemHeight.dp,
-                            items = TimeUnit.values().toList(),
-                            initialItem = timeUnit,
-                            textStyle = TextStyle(fontSize = textSize.sp),
-                            textColor = Color.LightGray,
-                            selectedTextColor = Color.Black,
-                            onItemSelected = { i, item ->
-                                timeUnit = item
-                            }
-                        )
-                        Text(text = "前", fontSize = (textSize * 1.5).sp)
-                    }
+                Column(Modifier.padding(horizontal = 10.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                    InfiniteCircularList(
+                        width = width.dp,
+                        itemHeight = itemHeight.dp,
+                        items = (3..30).toList(),
+                        initialItem = number,
+                        textStyle = TextStyle(fontSize = textSize.sp),
+                        textColor = Color.LightGray,
+                        selectedTextColor = Color.Black,
+                        onItemSelected = { i, item ->
+                            number = item
+                        }
+                    )
                     Spacer(modifier = Modifier.height(10.dp))
                     Text(
-                        text = if (selectedDateTime.toLocalDate() == now.toLocalDate()) {
-                            "今天 ${selectedDateTime.toLocalTime()}"
-                        } else {
-                            selectedDateTime.format(DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm"))
-                        },
+                        text = "${startDate.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"))} - ${
+                            startDate.plusWeeks(
+                                number.toLong()
+                            ).format(DateTimeFormatter.ofPattern("yyyy-MM-dd"))
+                        }",
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(horizontal = 12.dp)
@@ -146,15 +106,7 @@ fun ReminderPicker(
                             .align(Alignment.CenterHorizontally),
                         textAlign = TextAlign.Center
                     )
-
                     Spacer(modifier = Modifier.height(5.dp))
-                    Text(
-                        text = "提醒时间已过",
-                        color = MaterialTheme.colorScheme.error.copy(if (savable) 0f else 1f),
-                        modifier = Modifier.align(Alignment.CenterHorizontally),
-                        fontSize = 13.sp
-                    )
-
                 }
                 // =======OPT button
                 Row(
@@ -166,10 +118,12 @@ fun ReminderPicker(
                     TextButton(onClick = onDismissRequest) {
                         Text(text = "取消")
                     }
-                    TextButton(onClick = {
-                        updateReminderTime(selectedDateTime)
-                        onDismissRequest()
-                    }, enabled = savable) {
+                    TextButton(
+                        onClick = {
+                            onSelect(number)
+                            onDismissRequest()
+                        },
+                    ) {
                         Text(text = "保存")
                     }
                 }
