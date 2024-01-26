@@ -43,6 +43,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import cn.liibang.pinoko.data.entity.TermPO
 import cn.liibang.pinoko.ui.screen.main.LocalNavController
 import cn.liibang.pinoko.ui.screen.main.SubRouter
+import java.math.BigDecimal
 import java.math.RoundingMode
 import java.time.LocalDate
 import java.time.temporal.ChronoUnit
@@ -100,7 +101,11 @@ private fun TermCard(termPO: TermPO, toEdit: () -> Unit) {
         val passedDays = ChronoUnit.DAYS.between(startDate, currentDate)
 
         // 计算学期已过的百分比
-        val passedPercentage = passedDays.toBigDecimal().divide(totalDays.toBigDecimal(), 1, RoundingMode.UP)
+        val passedPercentage = (passedDays.toBigDecimal().divide(
+            totalDays.toBigDecimal(),
+            2,
+            RoundingMode.UP
+        ) * 100.toBigDecimal()).setScale(0, RoundingMode.UNNECESSARY).toString()
 
         "学期已过：$passedPercentage%"
     }
@@ -166,7 +171,8 @@ private fun TermCard(termPO: TermPO, toEdit: () -> Unit) {
                         )
                         DropdownMenuItem(
                             text = { Text(text = "编辑", fontWeight = FontWeight.SemiBold) },
-                            onClick = toEdit)
+                            onClick = toEdit
+                        )
                         DropdownMenuItem(
                             text = { Text(text = "删除", fontWeight = FontWeight.SemiBold) },
                             onClick = { /*TODO*/ })
