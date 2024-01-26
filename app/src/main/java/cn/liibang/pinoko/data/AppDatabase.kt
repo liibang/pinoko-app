@@ -20,7 +20,7 @@ import cn.liibang.pinoko.data.entity.TermPO
     entities =
     [
         TaskPO::class, TaskCategoryPO::class, TermPO::class, CoursePO::class
-    ], version = 6
+    ], version = 7
 )
 @TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {
