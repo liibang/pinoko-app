@@ -111,7 +111,8 @@ private fun TermCard(termPO: TermPO, toEdit: () -> Unit) {
     Card(
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceDim),
         elevation = CardDefaults.cardElevation(2.dp),
-        modifier = Modifier.padding(bottom = 15.dp)
+        modifier = Modifier.padding(bottom = 15.dp),
+        onClick = toEdit
     ) {
         Row(
             Modifier
