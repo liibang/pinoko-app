@@ -1,5 +1,10 @@
 package cn.liibang.pinoko.ui.screen.task
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandHorizontally
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkHorizontally
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -10,7 +15,9 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -44,52 +51,97 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.viewmodel.compose.viewModel
 import cn.liibang.pinoko.R
+import cn.liibang.pinoko.data.entity.SettingPO
 import cn.liibang.pinoko.model.TaskCategoryVO
 import cn.liibang.pinoko.ui.component.TaskCard
 import cn.liibang.pinoko.ui.component.XTextField
+import cn.liibang.pinoko.ui.screen.category.CategoryForm
 import cn.liibang.pinoko.ui.screen.category.CategoryViewModel
 import cn.liibang.pinoko.ui.screen.category.DEFAULT_CATEGORY_ALL
+import cn.liibang.pinoko.ui.screen.category.DEFAULT_CATEGORY_NONE
+import cn.liibang.pinoko.ui.screen.main.LocalNavController
+import cn.liibang.pinoko.ui.screen.main.SubRouter
+import cn.liibang.pinoko.ui.screen.main.TaskDisplayMode
+import cn.liibang.pinoko.ui.screen.setting.SettingViewModel
 
 
 @Composable
-fun TaskScreen(todoViewModel: TaskViewModel = hiltViewModel(), categoryViewModel: CategoryViewModel = hiltViewModel()) {
-
+fun TaskScreen(
+    taskViewModel: TaskViewModel,
+    categoryViewModel: CategoryViewModel = hiltViewModel(),
+    displayMode: TaskDisplayMode,
+    settingViewModel: SettingViewModel
+) {
+    val setting by settingViewModel.setting.collectAsState()
     val taskCategories by categoryViewModel.taskCategories.collectAsState()
-    val selectedCategoryID by todoViewModel.selectedCategoryID.collectAsState()
-    val tasks by todoViewModel.tasks.collectAsState()
-    val searchValue by todoViewModel.searchValue.collectAsState()
+    val selectedCategoryID by taskViewModel.selectedCategoryID.collectAsState()
+    val tasks by taskViewModel.tasks.collectAsState()
+    val searchValue by taskViewModel.searchValue.collectAsState()
 
     Column {
-        ToolHeader(searchValue, todoViewModel::updateSearchValue)
+        ToolHeader(
+            searchValue,
+            taskViewModel::updateSearchValue,
+            displayMode,
+            setting,
+            settingViewModel::saveOrUpdate
+        )
         CategoryChips(
             taskCategories,
             selectedCategoryID,
-            todoViewModel::changeSelectedCategory
+            taskViewModel::changeSelectedCategory
         )
-        if (tasks.isEmpty()) {
-            Column(
-                modifier = Modifier.fillMaxSize(),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
-            ) {
-                Image(
-                    painter = painterResource(id = R.drawable.no_task),
-                    contentDescription = "",
-                    modifier = Modifier.scale(1.75f)
-                )
-                Spacer(modifier = Modifier.height(40.dp))
-                Text(text = "无事了", fontWeight = FontWeight.SemiBold, fontSize = 17.sp)
-            }
-        } else {
 
-            Column(Modifier.padding(horizontal = 16.dp, vertical = 10.dp)) {
-                tasks.forEachIndexed { _, task ->
-                    TaskCard(task, todoViewModel::updateCompletedStatus, deleteTask = todoViewModel::delete)
+        // 显示清单模块
+        AnimatedVisibility(
+            visible = displayMode == TaskDisplayMode.LIST,
+            enter = expandHorizontally() + fadeIn(),
+            exit = shrinkHorizontally() + fadeOut()
+        ) {
+            if (displayMode == TaskDisplayMode.LIST) {
+                if (tasks.isEmpty()) {
+                    Column(
+                        modifier = Modifier.fillMaxSize(),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        Image(
+                            painter = painterResource(id = R.drawable.no_task),
+                            contentDescription = "",
+                            modifier = Modifier.scale(1.75f)
+                        )
+                        Spacer(modifier = Modifier.height(40.dp))
+                        Text(text = "无事了", fontWeight = FontWeight.SemiBold, fontSize = 17.sp)
+                    }
+                } else {
+                    LazyColumn(Modifier.padding(horizontal = 16.dp)) {
+                        item { Spacer(modifier = Modifier.height(10.dp)) }
+                        itemsIndexed(tasks) { _, task ->
+                            TaskCard(
+                                task,
+                                taskViewModel::updateCompletedStatus,
+                                deleteTask = taskViewModel::delete,
+                            )
+                        }
+                    }
                 }
             }
+        }
 
+        AnimatedVisibility(
+            visible = displayMode != TaskDisplayMode.LIST,
+            enter = expandHorizontally() + fadeIn(),
+            exit = shrinkHorizontally() + fadeOut()
+        ) {
+            if (displayMode != TaskDisplayMode.LIST) {
+                // 显示四象限模块
+                QuadrantList(
+                    tasks,
+                    taskViewModel::updateTaskPriority,
+                    taskViewModel::updateCompletedStatus
+                )
+            }
         }
     }
 }
@@ -100,6 +152,16 @@ private fun CategoryChips(
     selectedCategoryID: String,
     changeSelectedCategory: (String) -> Unit
 ) {
+
+    var isShowCategoryAddForm by remember {
+        mutableStateOf(false)
+    }
+    CategoryForm(
+        show = isShowCategoryAddForm,
+        onDismissRequest = { isShowCategoryAddForm = false },
+        onConfirm = {}
+    )
+
     Row {
         LazyRow(
             Modifier
@@ -107,7 +169,7 @@ private fun CategoryChips(
                 .weight(1f)
         ) {
             itemsIndexed(
-                categories.toMutableList().apply { add(0, DEFAULT_CATEGORY_ALL) }
+                categories.toMutableList().apply {  add(0, DEFAULT_CATEGORY_NONE); add(0, DEFAULT_CATEGORY_ALL); }
             ) { _, it ->
                 FilterChip(
                     modifier = Modifier.padding(horizontal = 5.dp),
@@ -126,7 +188,7 @@ private fun CategoryChips(
             item {
                 FilterChip(
                     modifier = Modifier.padding(horizontal = 5.dp),
-                    onClick = { },
+                    onClick = { isShowCategoryAddForm = true },
                     label = {
                         Icon(
                             imageVector = Icons.Default.Add,
@@ -151,7 +213,13 @@ private fun CategoryChips(
 
 
 @Composable
-private fun ToolHeader(searchValue: String, updateSearchValue: (String) -> Unit) {
+private fun ToolHeader(
+    searchValue: String,
+    updateSearchValue: (String) -> Unit,
+    displayMode: TaskDisplayMode,
+    setting: SettingPO,
+    updateSetting: (SettingPO) -> Unit
+) {
 
     val focusRequester = remember { FocusRequester() }
 
@@ -163,13 +231,18 @@ private fun ToolHeader(searchValue: String, updateSearchValue: (String) -> Unit)
         mutableStateOf(false)
     }
 
+    val navController = LocalNavController.current
+
     Row(Modifier.padding(top = 5.dp), verticalAlignment = Alignment.CenterVertically) {
 
         if (isShowSearchBar) {
             LaunchedEffect(Unit) {
                 focusRequester.requestFocus()
             }
-            IconButton(onClick = { isShowSearchBar = false }) {
+            IconButton(onClick = {
+                updateSearchValue("")
+                isShowSearchBar = false
+            }) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                     contentDescription = "",
@@ -200,7 +273,7 @@ private fun ToolHeader(searchValue: String, updateSearchValue: (String) -> Unit)
             )
         } else {
             Text(
-                text = "事件",
+                text = if (displayMode == TaskDisplayMode.LIST) "事件列表" else "四象限",
                 fontWeight = FontWeight.Medium,
                 fontSize = 20.sp,
                 color = MaterialTheme.colorScheme.onSurface,
@@ -231,19 +304,42 @@ private fun ToolHeader(searchValue: String, updateSearchValue: (String) -> Unit)
             ) {
                 DropdownMenuItem(
                     text = { Text("管理分类", fontWeight = FontWeight.SemiBold) },
-                    onClick = { },
+                    onClick = {
+                        navController.navigate(SubRouter.CategoryScreen.route)
+                        isShowMenu = false
+                    },
                 )
                 DropdownMenuItem(
-                    text = { Text("隐藏已完成", fontWeight = FontWeight.SemiBold) },
-                    onClick = { },
+                    text = {
+                        Text(
+                            if (setting.taskShowCompleted) "隐藏已完成" else "展示已完成",
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    },
+                    onClick = { updateSetting(setting.copy(taskShowCompleted = !setting.taskShowCompleted)) },
+                )
+
+                // 设置任务排序、包含弹窗
+                var isShowTaskSortSettingDialog by remember {
+                    mutableStateOf(false)
+                }
+                TaskSortSettingDialog(
+                    isShow = isShowTaskSortSettingDialog,
+                    onDismissRequest = {
+                        isShowTaskSortSettingDialog = false
+                        isShowMenu = false
+                    },
+                    updateSetting = {
+                        updateSetting(it)
+                        isShowMenu = false
+                    },
+                    setting = setting
                 )
                 DropdownMenuItem(
                     text = { Text("排序方式", fontWeight = FontWeight.SemiBold) },
-                    onClick = { }
-                )
-                DropdownMenuItem(
-                    text = { Text("批量编辑", fontWeight = FontWeight.SemiBold) },
-                    onClick = { }
+                    onClick = {
+                        isShowTaskSortSettingDialog = true
+                    }
                 )
             }
         }

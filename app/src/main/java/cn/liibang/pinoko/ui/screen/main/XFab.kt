@@ -8,17 +8,23 @@ import androidx.compose.material.icons.filled.MenuBook
 import androidx.compose.material.icons.filled.TaskAlt
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
+import cn.liibang.pinoko.ui.screen.category.DEFAULT_CATEGORY_ALL
+import cn.liibang.pinoko.ui.screen.task.TaskViewModel
+import cn.liibang.pinoko.ui.support.toTimestamp
 import de.charlex.compose.SpeedDialData
 import de.charlex.compose.SpeedDialFloatingActionButton
+import java.time.LocalDate
 
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
-fun XFab(currentRouter: String) {
+fun XFab(currentRouter: String, taskViewModel: TaskViewModel) {
     val navController = LocalNavController.current
-
+    val categoryId by taskViewModel.selectedCategoryID.collectAsState()
     when (currentRouter) {
         MainRouter.Agenda.route -> {
             SpeedDialFloatingActionButton(
@@ -46,11 +52,31 @@ fun XFab(currentRouter: String) {
         }
 
         MainRouter.Task.route -> {
-            FabTemplate { navController.navigate(SubRouter.TaskForm.route) }
+            FabTemplate {
+                if (categoryId == DEFAULT_CATEGORY_ALL.id) {
+                    navController.navigate(SubRouter.TaskForm.route)
+                } else {
+                    navController.navigate("${SubRouter.TaskForm.route}?categoryId=${categoryId}")
+                }
+
+
+            }
         }
 
         MainRouter.SchoolTimeTable.route -> {
             FabTemplate { navController.navigate(SubRouter.TermForm.route) }
+        }
+
+        MainRouter.Focus.route -> {
+//            FabTemplate { navController.navigate(SubRouter.TermForm.route) }
+        }
+
+        MainRouter.Habit.route -> {
+            FabTemplate { navController.navigate(SubRouter.HabitForm.route) }
+        }
+
+        SubRouter.HabitList.route -> {
+            FabTemplate { navController.navigate(SubRouter.HabitForm.route) }
         }
 
         else -> {

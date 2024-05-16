@@ -9,18 +9,11 @@ import java.time.LocalTime
 
 @Entity("course")
 data class CoursePO(
-
-    @PrimaryKey
-    val id: StringUUID,
+    @PrimaryKey override val id: StringUUID,
     @ColumnInfo(name = "term_id") val termId: String,
-    @ColumnInfo(name = "name") val name: String,
-    @ColumnInfo(name = "color") val color: String,
-    @ColumnInfo(name = "start_at") val startAt: LocalTime,
-    @ColumnInfo(name = "end_at") val endAt: LocalTime,
-    @ColumnInfo(name = "location") val location: String,
-    @ColumnInfo(name = "teacher") val teacher: String,
+    val name: String,
+    val color: String,
 
-
-    @ColumnInfo(name = "created_at") val createdAt: LocalDateTime,
-    @ColumnInfo(name = "updated_at") val updatedAt: LocalDateTime,
-)
+    override val createdAt: LocalDateTime,
+    override val updatedAt: LocalDateTime,
+): BasePO

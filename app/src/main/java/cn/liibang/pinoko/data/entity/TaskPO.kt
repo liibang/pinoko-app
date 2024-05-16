@@ -11,7 +11,7 @@ import java.time.LocalTime
 
 @Entity("task")
 data class TaskPO(
-    @PrimaryKey val id: StringUUID,
+    @PrimaryKey override val id: StringUUID,
     @ColumnInfo(name = "category_id") val categoryId: String? = null,
     @ColumnInfo(name = "name") val name: String,
     @ColumnInfo(
@@ -24,6 +24,6 @@ data class TaskPO(
     @ColumnInfo(name = "due_time") val dueTime: LocalTime? = null,
     @ColumnInfo(name = "sort", defaultValue = "0") val sort: Int = 0,
     @ColumnInfo(name = "completed", defaultValue = "0") val completed: Boolean = false,
-    @ColumnInfo(name = "created_at") val createdAt: LocalDateTime,
-    @ColumnInfo(name = "updated_at") val updatedAt: LocalDateTime,
-)
+    override val createdAt: LocalDateTime,
+    override val updatedAt: LocalDateTime,
+): BasePO

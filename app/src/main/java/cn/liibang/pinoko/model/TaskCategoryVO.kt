@@ -7,5 +7,15 @@ data class TaskCategoryVO(
     val name: String,
     val color: Int,
     val sort: Int = 0,
-    val createdAt: LocalDateTime
+    val createdAt: LocalDateTime,
+    val taskCount: Int
+)
+
+data class TaskCategoryRecordVO(
+    val id: String,
+    val name: String,
+    val color: Int,
+    val sort: Int = 0,
+    val createdAt: LocalDateTime,
+    val taskCount: Int
 )

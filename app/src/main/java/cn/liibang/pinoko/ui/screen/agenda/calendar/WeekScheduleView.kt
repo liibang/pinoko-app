@@ -1,29 +1,28 @@
 package cn.liibang.pinoko.ui.screen.agenda.calendar
 
 import android.util.Log
-import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.material.Surface
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material.icons.filled.MoreHoriz
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -32,7 +31,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import cn.liibang.pinoko.ui.support.bottomElevation
+import cn.liibang.pinoko.data.StringUUID
+import cn.liibang.pinoko.data.entity.TermPO
+import cn.liibang.pinoko.ui.screen.main.LocalNavController
+import cn.liibang.pinoko.ui.screen.main.MainRouter
+import cn.liibang.pinoko.ui.support.calculateWeekNumber
 import cn.liibang.pinoko.ui.support.displayText
 import com.kizitonwose.calendar.compose.WeekCalendar
 import com.kizitonwose.calendar.compose.weekcalendar.WeekCalendarState
@@ -42,29 +45,37 @@ import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.launch
 import java.time.DayOfWeek
 import java.time.LocalDate
+import java.time.temporal.ChronoUnit
 import java.time.temporal.TemporalAdjusters
+import kotlin.reflect.KFunction1
 
 
 @Composable
-fun WeekScheduleView(now: LocalDate, weekCalendarState: WeekCalendarState) {
+fun WeekScheduleView(
+    now: LocalDate,
+    weekCalendarState: WeekCalendarState,
+    termSetId: StringUUID?,
+    fetchTermById: suspend (StringUUID) -> TermPO?,
+    selectedDay: LocalDate,
+    changeSelectedDay: (LocalDate) -> Unit
+) {
 
     val scope = rememberCoroutineScope()
-//    Surface(
-//        modifier = Modifier
-//            .fillMaxWidth()
-//            .background(MaterialTheme.colorScheme.surfaceDim),
-//        elevation = 3.dp
-//    ) {
-//        Column(
-//            Modifier
-//                .bottomElevation()
-//                .background(MaterialTheme.colorScheme.surfaceDim),
-//        ) {
-//
-//        }
-//    }
 
-    Column( ) {
+    var term by remember {
+        mutableStateOf<TermPO?>(null)
+    }
+
+    LaunchedEffect(Unit) {
+        if (termSetId != null) {
+            term = fetchTermById(termSetId)
+        }
+    }
+
+
+     val navController = LocalNavController.current
+
+    Column() {
         // 头部
         Row(
             modifier = Modifier.padding(
@@ -73,13 +84,25 @@ fun WeekScheduleView(now: LocalDate, weekCalendarState: WeekCalendarState) {
                 bottom = 5.dp,
                 end = 5.dp
             ),
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center
         ) {
             DayText(
-                selectedWeek = rememberFirstVisibleWeekAfterScroll(state = weekCalendarState),
+                selectedWeek = rememberFirstVisibleWeekAfterScroll(
+                    state = weekCalendarState,
+                    changeSelectDay = changeSelectedDay,
+                    now = now,
+                    selectedDay = selectedDay,
+                ),
                 now = now,
             )
+
+            if (term != null && weekCalendarState.firstVisibleWeek.days.any { it.date >= term!!.startDate }) {
+                val currentWeekValue = calculateWeekNumber(termStartDate = term!!.startDate, dateToCheck = selectedDay)
+                Text(text = " (第${currentWeekValue}周)", fontSize = 13.5.sp)
+            }
             Spacer(modifier = Modifier.weight(1f))
+
             if (!weekCalendarState.firstVisibleWeek.days.map { it.date }.contains(now)) {
                 IconButton(modifier = Modifier.offset(y = ((-1.5).dp)), onClick = {
                     // 还要修改week TODO
@@ -107,14 +130,10 @@ fun WeekScheduleView(now: LocalDate, weekCalendarState: WeekCalendarState) {
             }
 
 
-            IconButton(onClick = { /*TODO*/ }) {
-                Box {
-                    androidx.compose.material.Icon(
-                        imageVector = Icons.Default.MoreHoriz,
-                        contentDescription = "管理菜单",
-                        tint = MaterialTheme.colorScheme.outline
-                    )
-                }
+            TextButton(onClick = {
+                navController.navigate(MainRouter.SchoolTimeTable.route)
+            }) {
+                Text(text = "学期管理")
             }
         }
 
@@ -196,17 +215,17 @@ private fun DayText(selectedWeek: Week, now: LocalDate) {
 }
 
 
-@Composable
-private fun rememberFirstVisibleWeekAfterScroll(
-    state: WeekCalendarState,
-): Week {
-    val visibleWeek = remember(state) { mutableStateOf(state.firstVisibleWeek) }
-    LaunchedEffect(state) {
-        snapshotFlow { state.isScrollInProgress }
-            .filter { scrolling -> !scrolling }
-            .collect {
-                visibleWeek.value = state.firstVisibleWeek
-            }
-    }
-    return visibleWeek.value
-}
+//@Composable
+//private fun rememberFirstVisibleWeekAfterScroll(
+//    state: WeekCalendarState,
+//): Week {
+//    val visibleWeek = remember(state) { mutableStateOf(state.firstVisibleWeek) }
+//    LaunchedEffect(state) {
+//        snapshotFlow { state.isScrollInProgress }
+//            .filter { scrolling -> !scrolling }
+//            .collect {
+//                visibleWeek.value = state.firstVisibleWeek
+//            }
+//    }
+//    return visibleWeek.value
+//}

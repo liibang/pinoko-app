@@ -26,6 +26,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -42,21 +43,24 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.hilt.navigation.compose.hiltViewModel
+import cn.liibang.pinoko.data.StringUUID
 import cn.liibang.pinoko.data.entity.TaskCategoryPO
 import cn.liibang.pinoko.ui.component.XTextField
 import cn.liibang.pinoko.ui.support.generateUUID
 import cn.liibang.pinoko.ui.theme.CategoryColor
 import cn.liibang.pinoko.ui.theme.XShape
+import cn.liibang.pinoko.ui.theme.categoryColorEnum
 import java.time.LocalDateTime
 
 private const val MAX_TEXT_LENGTH = 30
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CategoryAddForm(
+fun CategoryForm(
     show: Boolean,
     onDismissRequest: () -> Unit,
-    onCreate: (String) -> Unit,
+    onConfirm: (String) -> Unit,
+    id: StringUUID? = null
 ) {
     val viewModel = hiltViewModel<CategoryViewModel>()
 
@@ -67,6 +71,17 @@ fun CategoryAddForm(
 
         var selectedColor: CategoryColor? by remember {
             mutableStateOf(null)
+        }
+
+        var categoryPO: TaskCategoryPO? by remember {
+            mutableStateOf(null)
+        }
+        LaunchedEffect(Unit) {
+            id?.let { viewModel.getByID(it) }?.run {
+                categoryName = name
+                selectedColor = categoryColorEnum(this.color)
+                categoryPO = this@run
+            }
         }
 
         Dialog(
@@ -111,6 +126,7 @@ fun CategoryAddForm(
                         ),
                         shape = XShape.Card,
                         paddingValues = PaddingValues(8.dp),
+                        modifier = Modifier.fillMaxWidth()
                     )
                     Text(
                         text = "${categoryName.length}/$MAX_TEXT_LENGTH",
@@ -200,17 +216,28 @@ fun CategoryAddForm(
                         onClick = {
                             // TODO 优化
                             val now = LocalDateTime.now()
-                            val categoryPO = TaskCategoryPO(
-                                id = generateUUID(),
-                                name = categoryName,
-                                color = selectedColor?.code ?: CategoryColor.DEFAULT_BLUE.code,
-                                sort = 0,
-                                createAt = now,
-                                updatedAt = now
-                            )
-                            viewModel.save(categoryPO)
+                            val po = if (id == null) {
+                                TaskCategoryPO(
+                                    id = generateUUID(),
+                                    name = categoryName,
+                                    color = selectedColor?.code ?: CategoryColor.DEFAULT_BLUE.code,
+                                    sort = 0,
+                                    createdAt = now,
+                                    updatedAt = now
+                                ).also {
+                                    viewModel.save(it)
+                                }
+                            } else {
+                                categoryPO!!.copy(
+                                    updatedAt = now,
+                                    name = categoryName,
+                                    color = selectedColor?.code ?: CategoryColor.DEFAULT_BLUE.code,
+                                ).also {
+                                    viewModel.update(it)
+                                }
+                            }
                             onDismissRequest()
-                            onCreate(categoryPO.id)
+                            onConfirm(po.id)
                         }, enabled = categoryName.isNotEmpty()
                     ) {
                         Text(text = "保存")

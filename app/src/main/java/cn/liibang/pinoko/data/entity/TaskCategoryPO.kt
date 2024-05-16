@@ -9,11 +9,11 @@ import java.time.LocalDateTime
 
 @Entity(tableName = "task_category")
 data class TaskCategoryPO(
-    @PrimaryKey val id: StringUUID,
-    @ColumnInfo(name = "name") val name: String,
-    @ColumnInfo(name = "color") val color: Int = CategoryColor.DEFAULT_BLUE.code,
-    @ColumnInfo(name = "sort", defaultValue = "0") val sort: Int = 0,
+    @PrimaryKey override val id: StringUUID,
+    val name: String,
+    val color: Int = CategoryColor.DEFAULT_BLUE.code,
+    @ColumnInfo(defaultValue = "0") val sort: Int = 0,
     // 通用字段
-    @ColumnInfo(name = "created_at") val createAt: LocalDateTime,
-    @ColumnInfo(name = "updated_at") val updatedAt: LocalDateTime,
-)
+    override val createdAt: LocalDateTime,
+    override val updatedAt: LocalDateTime,
+) : BasePO

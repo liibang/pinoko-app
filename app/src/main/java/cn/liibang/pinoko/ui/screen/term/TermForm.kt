@@ -1,6 +1,7 @@
 package cn.liibang.pinoko.ui.screen.term
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -22,7 +23,6 @@ import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.LocalMinimumInteractiveComponentEnforcement
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SelectableDates
 import androidx.compose.material3.Switch
@@ -33,8 +33,8 @@ import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -50,28 +50,30 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import cn.hutool.core.util.IdUtil
+import cn.liibang.pinoko.data.entity.LessonInfo
 import cn.liibang.pinoko.data.entity.TermPO
-import cn.liibang.pinoko.toLocalDate
+import cn.liibang.pinoko.ui.support.toLocalDate
 import cn.liibang.pinoko.ui.component.XTextField
 import cn.liibang.pinoko.ui.component.OptButton
 import cn.liibang.pinoko.ui.screen.main.LocalNavController
 import cn.liibang.pinoko.ui.screen.task.EditMode
+import cn.liibang.pinoko.ui.screen.setting.SettingViewModel
 import cn.liibang.pinoko.ui.support.toDateMillis
 import cn.liibang.pinoko.ui.support.toMonthMillis
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
-//data class TermFromState(
-//    val id: StringUUID? = null,
-//    val name: String = "",
-//    val startDate: LocalDate? = null,
-//    val weeks: Int? = null
-//)
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun TermForm(id: String?, termViewModel: TermViewModel = hiltViewModel()) {
+fun TermForm(
+    id: String?,
+    termViewModel: TermViewModel = hiltViewModel(),
+    settingViewModel: SettingViewModel,
+) {
+
+    val setting by settingViewModel.setting.collectAsState()
 
     val navController = LocalNavController.current
     val editMode = if (id == null) EditMode.CREATE else EditMode.UPDATE
@@ -82,19 +84,22 @@ fun TermForm(id: String?, termViewModel: TermViewModel = hiltViewModel()) {
                 id = "",
                 name = "",
                 startDate = LocalDate.now(),
-                weeks = 18,
+                weekCount = 18,
                 createdAt = LocalDateTime.MIN,
-                updatedAt = LocalDateTime.MIN
+                updatedAt = LocalDateTime.MIN,
+//                lessonInfo = LessonInfo()
             )
         )
     }
-
-
 
     LaunchedEffect(Unit) {
         id?.let {
             termViewModel.fetchById(it)?.run { formState = this }
         }
+    }
+
+    var isCurrentTermSetting by remember {
+        mutableStateOf(setting.termSetId == id)
     }
 
     val enableOptButton by remember {
@@ -131,12 +136,17 @@ fun TermForm(id: String?, termViewModel: TermViewModel = hiltViewModel()) {
                 onClick = {
                     // TODO
                     val modified = LocalDateTime.now()
-                    termViewModel.saveOrUpdate(
-                        po = formState.copy(
-                            createdAt = if (editMode == EditMode.CREATE) modified else formState.createdAt,
-                            updatedAt = modified
-                        )
+                    val isCreateMode = editMode == EditMode.CREATE
+                    val entity = formState.copy(
+                        createdAt = if (isCreateMode) modified else formState.createdAt,
+                        updatedAt = modified,
+                        id = if (isCreateMode) IdUtil.simpleUUID() else id!!
                     )
+                    termViewModel.saveOrUpdate(
+                        po = entity,
+                        isCreate = isCreateMode
+                    )
+                    settingViewModel.saveOrUpdate(setting.copy(termSetId =  if(isCurrentTermSetting) entity.id else null))
                     navController.popBackStack()
                 }
             )
@@ -247,7 +257,6 @@ fun TermForm(id: String?, termViewModel: TermViewModel = hiltViewModel()) {
                     DatePicker(state = dateState)
                 }
             }
-
         }
 
 
@@ -257,9 +266,9 @@ fun TermForm(id: String?, termViewModel: TermViewModel = hiltViewModel()) {
         WeekNumberPicker(
             isShow = isShowWeekNumberPicker,
             onDismissRequest = { isShowWeekNumberPicker = false },
-            initWeeks = formState.weeks,
+            initWeeks = formState.weekCount,
             startDate = formState.startDate,
-            onSelect = { formState = formState.copy(weeks = it) }
+            onSelect = { formState = formState.copy(weekCount = it) }
         )
         TextButton(
             shape = MaterialTheme.shapes.small.copy(CornerSize(10.dp)),
@@ -272,7 +281,7 @@ fun TermForm(id: String?, termViewModel: TermViewModel = hiltViewModel()) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(vertical = 10.dp),
+                    .padding(vertical = 0.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Icon(
@@ -289,7 +298,7 @@ fun TermForm(id: String?, termViewModel: TermViewModel = hiltViewModel()) {
                 )
                 Spacer(modifier = Modifier.weight(1f))
                 Text(
-                    text = formState.weeks.toString(),
+                    text = formState.weekCount.toString(),
                     color = MaterialTheme.colorScheme.outline,
                     modifier = Modifier
                         .clip(CircleShape.copy(CornerSize(10.dp)))
@@ -297,26 +306,40 @@ fun TermForm(id: String?, termViewModel: TermViewModel = hiltViewModel()) {
                         .padding(horizontal = 5.dp, vertical = 3.dp)
                 )
             }
-
         }
 
-        Spacer(modifier = Modifier.height(10.dp))
-        Row(
-            modifier = Modifier.padding(start = 10.dp),
-            verticalAlignment = Alignment.CenterVertically
+        // =============设置学期==========
+        TextButton(
+            shape = MaterialTheme.shapes.small.copy(CornerSize(10.dp)),
+            colors = ButtonDefaults.buttonColors(
+                contentColor = Color.Unspecified,
+                containerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(0.1.dp)
+            ),
+            onClick = {},
         ) {
-            Text(text = "设置为当前学期", modifier = Modifier.weight(1f))
-            CompositionLocalProvider(
-                LocalMinimumInteractiveComponentEnforcement provides false,
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.clickable { isCurrentTermSetting = !isCurrentTermSetting }
             ) {
+                Text(
+                    text = "设置为当前学期",
+                    modifier = Modifier.weight(1f),
+                    color = MaterialTheme.colorScheme.outline,
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.SemiBold,
+                )
+
                 Switch(
-                    checked = true,
-                    onCheckedChange = {},
+                    checked = isCurrentTermSetting,
+                    onCheckedChange = { isCurrentTermSetting = !isCurrentTermSetting },
                     modifier = Modifier.scale(0.65f),
-                    colors = SwitchDefaults.colors(checkedThumbColor = Color.Yellow)
+                    colors = SwitchDefaults.colors(
+                        checkedThumbColor = MaterialTheme.colorScheme.primary,
+                        checkedTrackColor = MaterialTheme.colorScheme.primaryContainer
+                    ),
                 )
             }
-        }
+        } // END
     }
 
 }

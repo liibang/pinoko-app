@@ -22,7 +22,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Checkbox
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccessTime
 import androidx.compose.material.icons.filled.Add
@@ -33,6 +32,7 @@ import androidx.compose.material.icons.filled.Event
 import androidx.compose.material.icons.filled.FiberManualRecord
 import androidx.compose.material.icons.filled.Flag
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
@@ -72,18 +72,19 @@ import androidx.compose.ui.window.Dialog
 import androidx.hilt.navigation.compose.hiltViewModel
 import cn.liibang.pinoko.data.entity.TaskPO
 import cn.liibang.pinoko.model.TaskCategoryVO
-import cn.liibang.pinoko.toLocalDate
+import cn.liibang.pinoko.ui.component.OptButton
 import cn.liibang.pinoko.ui.component.XTextField
 import cn.liibang.pinoko.ui.constant.Priority
 import cn.liibang.pinoko.ui.constant.priorityColor
-import cn.liibang.pinoko.ui.screen.category.CategoryAddForm
+import cn.liibang.pinoko.ui.screen.category.CategoryForm
 import cn.liibang.pinoko.ui.screen.category.CategoryViewModel
-import cn.liibang.pinoko.ui.component.OptButton
 import cn.liibang.pinoko.ui.screen.main.LocalNavController
 import cn.liibang.pinoko.ui.support.showToast
 import cn.liibang.pinoko.ui.support.toDateMillis
+import cn.liibang.pinoko.ui.support.toLocalDate
 import cn.liibang.pinoko.ui.support.toMonthMillis
 import cn.liibang.pinoko.ui.theme.categoryColor
+import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
@@ -97,12 +98,12 @@ enum class EditMode() {
 @Composable
 fun TaskForm(
     id: String?,
+    dueDate: LocalDate,
     taskViewModel: TaskViewModel = hiltViewModel(),
     categoryViewModel: CategoryViewModel = hiltViewModel(),
+    categoryId: String?,
 ) {
-
     val editMode = if (id == null) EditMode.CREATE else EditMode.UPDATE
-
     val context = LocalContext.current
 
     var formState by remember {
@@ -110,6 +111,8 @@ fun TaskForm(
             TaskPO(
                 id = "",
                 name = "",
+                categoryId = categoryId,
+                dueDate = dueDate,
                 createdAt = LocalDateTime.MIN,
                 updatedAt = LocalDateTime.MIN
             )
@@ -175,9 +178,9 @@ fun TaskForm(
             Checkbox(
                 checked = formState.completed,
                 onCheckedChange = { formState = formState.copy(completed = it) },
-                colors = CheckboxDefaults.colors(checkedColor = MaterialTheme.colorScheme.primary)
+                colors = CheckboxDefaults.colors(checkedColor = MaterialTheme.colorScheme.outline)
             )
-            CateGorySelector(
+            CategorySelector(
                 taskCategories = categories,
                 expanded = categoryExpandable,
                 onClick = { categoryExpandable = true },
@@ -267,8 +270,10 @@ fun TaskForm(
                 cleanValue = { formState = formState.copy(dueTime = null, reminderTime = null) }
             )
             if (isShow) {
-                val selectedDueTime = if (formState.dueTime != null) formState.dueTime!! else LocalTime.now()
-                val timeState = rememberTimePickerState(selectedDueTime.hour, selectedDueTime.minute, true)
+                val selectedDueTime =
+                    if (formState.dueTime != null) formState.dueTime!! else LocalTime.now()
+                val timeState =
+                    rememberTimePickerState(selectedDueTime.hour, selectedDueTime.minute, true)
                 Dialog(onDismissRequest = { isShow = false }) {
                     Column(
                         modifier = Modifier
@@ -337,35 +342,42 @@ fun TaskForm(
                 val dueDateTime = formState.dueDate!!.atTime(formState.dueTime)
                 DropdownMenuItem(
                     text = { Text(text = "与截止日期相同", fontWeight = FontWeight.SemiBold) },
-                    onClick = { formState = formState.copy(reminderTime = dueDateTime) },
+                    onClick = {
+                        formState = formState.copy(reminderTime = dueDateTime)
+                        menuExpanded = false
+                    },
                 )
                 DropdownMenuItem(
                     text = { Text(text = "5分钟前", fontWeight = FontWeight.SemiBold) },
                     onClick = {
                         formState = formState.copy(reminderTime = dueDateTime.minusMinutes(5))
+                        menuExpanded = false
                     }
                 )
                 DropdownMenuItem(
                     text = { Text(text = "10分钟前", fontWeight = FontWeight.SemiBold) },
                     onClick = {
                         formState = formState.copy(reminderTime = dueDateTime.minusMinutes(10))
+                        menuExpanded = false
                     }
                 )
                 DropdownMenuItem(
                     text = { Text(text = "30分钟前", fontWeight = FontWeight.SemiBold) },
                     onClick = {
                         formState = formState.copy(reminderTime = dueDateTime.minusMinutes(30))
+                        menuExpanded = false
                     }
                 )
                 DropdownMenuItem(
                     text = { Text(text = "提前一天", fontWeight = FontWeight.SemiBold) },
                     onClick = {
                         formState = formState.copy(reminderTime = dueDateTime.minusDays(1))
+                        menuExpanded = false
                     }
                 )
                 DropdownMenuItem(
                     text = { Text(text = "自定义时间", fontWeight = FontWeight.SemiBold) },
-                    onClick = { isShowDialog = true }
+                    onClick = { menuExpanded = true }
                 )
             }
             // 提醒时间滑块（弹窗）
@@ -384,7 +396,7 @@ fun TaskForm(
 
 
 @Composable
-fun CateGorySelector(
+fun CategorySelector(
     taskCategories: List<TaskCategoryVO>,
     expanded: Boolean,
     onClick: () -> Unit,
@@ -479,10 +491,10 @@ fun CateGorySelector(
                         )
                     }
                 )
-                CategoryAddForm(
+                CategoryForm(
                     showCategoryForm,
                     onDismissRequest = { showCategoryForm = false },
-                    onCreate = selectCategory
+                    onConfirm = selectCategory
                 )
 
             }

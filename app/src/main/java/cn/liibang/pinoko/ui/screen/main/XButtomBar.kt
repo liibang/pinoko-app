@@ -1,6 +1,9 @@
 package cn.liibang.pinoko.ui.screen.main
 
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -8,12 +11,17 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CalendarViewWeek
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.BottomAppBar
+import androidx.compose.material.icons.filled.LockClock
 import androidx.compose.material.icons.filled.Splitscreen
+import androidx.compose.material.icons.filled.TableRows
 import androidx.compose.material.icons.rounded.GridView
+import androidx.compose.material.icons.rounded.History
+import androidx.compose.material.icons.rounded.List
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
@@ -23,8 +31,8 @@ fun XBottomBar(
     showMenu: () -> Unit,
     viewModel: MainViewModel
 ) {
-
-     when (viewModel.currentRoute) {
+    val navController = LocalNavController.current
+    when (viewModel.currentRoute) {
         MainRouter.Agenda.route -> {
             BottomBarTemplate(showMenu) {
                 IconButton(
@@ -39,6 +47,7 @@ fun XBottomBar(
                 }
             }
         }
+
         MainRouter.Task.route -> {
             BottomBarTemplate(showMenu = showMenu) {
                 IconButton(
@@ -53,9 +62,42 @@ fun XBottomBar(
                 }
             }
         }
-         MainRouter.SchoolTimeTable.route -> {
-             BottomBarTemplate(showMenu = showMenu)
-         }
+
+        MainRouter.SchoolTimeTable.route -> {
+//            BottomBarTemplate(showMenu = showMenu)
+        }
+
+        MainRouter.Focus.route -> {
+            BottomBarTemplate(showMenu = showMenu) {
+                IconButton(
+                    onClick = { navController.navigate(SubRouter.FocusList.route) },
+                    modifier = Modifier.padding(end = 3.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Rounded.History,
+                        contentDescription = "history",
+                        tint = MaterialTheme.colorScheme.onPrimary
+                    )
+                }
+            }
+        }
+        MainRouter.Stats.route -> {
+            BottomBarTemplate(showMenu = showMenu)
+        }
+        MainRouter.Habit.route -> {
+            BottomBarTemplate(showMenu = showMenu) {
+                IconButton(
+                    onClick = { navController.navigate(SubRouter.HabitList.route) },
+                    modifier = Modifier.padding(end = 3.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.TableRows,
+                        contentDescription = "全部",
+                        tint = MaterialTheme.colorScheme.onPrimary
+                    )
+                }
+            }
+        }
         else -> {}
     }
 
@@ -63,11 +105,10 @@ fun XBottomBar(
 
 
 @Composable
-private fun BottomBarTemplate(
+fun BottomBarTemplate(
     showMenu: () -> Unit,
     modeButton: @Composable () -> Unit = {}
 ) {
-
     BottomAppBar(
         cutoutShape = MaterialTheme.shapes.small.copy(CornerSize(50)),
         backgroundColor = MaterialTheme.colorScheme.primary,

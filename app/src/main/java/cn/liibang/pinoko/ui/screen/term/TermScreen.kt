@@ -1,6 +1,8 @@
 package cn.liibang.pinoko.ui.screen.term
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -13,6 +15,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.School
@@ -35,39 +38,73 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import cn.liibang.pinoko.R
+import cn.liibang.pinoko.data.entity.SettingPO
 import cn.liibang.pinoko.data.entity.TermPO
 import cn.liibang.pinoko.ui.screen.main.LocalNavController
 import cn.liibang.pinoko.ui.screen.main.SubRouter
-import java.math.BigDecimal
+import cn.liibang.pinoko.ui.screen.setting.SettingViewModel
 import java.math.RoundingMode
 import java.time.LocalDate
 import java.time.temporal.ChronoUnit
+import kotlin.reflect.KFunction1
 
 @Composable
-fun TermScreen(termViewModel: TermViewModel = hiltViewModel()) {
+fun TermScreen(termViewModel: TermViewModel = hiltViewModel(), settingViewModel: SettingViewModel) {
 
     val terms by termViewModel.termList.collectAsState()
     val navController = LocalNavController.current
 
+    val setting by settingViewModel.setting.collectAsState()
+
     Column(
         Modifier
             .fillMaxSize()
-            .padding(16.dp)
+            .padding(16.dp),
     ) {
-        Text(text = "学期管理", fontWeight = FontWeight.SemiBold, fontSize = 20.sp)
+
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            IconButton(onClick = { navController.popBackStack() }) {
+                Icon(imageVector = Icons.Default.ArrowBack, contentDescription = "",)
+            }
+            Spacer(modifier = Modifier.width(5.5.dp))
+            Text(text = "学期管理", fontWeight = FontWeight.SemiBold, fontSize = 20.sp)
+        }
 
         Spacer(modifier = Modifier.height(15.dp))
 
-        LazyColumn {
-            items(terms) {
-                TermCard(
-                    termPO = it,
-                    toEdit = { navController.navigate(SubRouter.TermForm.routeWithParam(it.id)) })
+        if (terms.isEmpty()) {
+            Column(
+                modifier = Modifier.fillMaxSize(),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                Image(
+                    painter = painterResource(id = R.drawable.no_term),
+                    contentDescription = "",
+                    modifier = Modifier.scale(1.75f)
+                )
+                Spacer(modifier = Modifier.height(40.dp))
+                Text(text = "暂无学期信息", fontWeight = FontWeight.SemiBold, fontSize = 17.sp)
+            }
+        } else {
+            LazyColumn {
+                items(terms) {
+                    TermCard(
+                        setting = setting,
+                        updateSetting = settingViewModel::saveOrUpdate,
+                        termPO = it,
+                        toEdit = { navController.navigate(SubRouter.TermForm.routeWithParam(it.id)) },
+                        doDelete = termViewModel::delete
+                    )
+                }
             }
         }
     }
@@ -75,7 +112,13 @@ fun TermScreen(termViewModel: TermViewModel = hiltViewModel()) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun TermCard(termPO: TermPO, toEdit: () -> Unit) {
+private fun TermCard(
+    termPO: TermPO,
+    toEdit: () -> Unit,
+    doDelete: (TermPO) -> Unit,
+    setting: SettingPO,
+    updateSetting: (SettingPO) -> Unit
+) {
 
     var isShowOptMenu by remember {
         mutableStateOf(false)
@@ -86,7 +129,7 @@ private fun TermCard(termPO: TermPO, toEdit: () -> Unit) {
 
     // 假设学期开始日期和结束日期是通过以下方式计算得到的
     val startDate = termPO.startDate
-    val endDate = startDate.plusWeeks(termPO.weeks.toLong())
+    val endDate = startDate.plusWeeks(termPO.weekCount.toLong())
 
     // 判断当前日期是否在学期开始和结束日期之间
     val tip = if (currentDate.isBefore(startDate)) {
@@ -148,11 +191,12 @@ private fun TermCard(termPO: TermPO, toEdit: () -> Unit) {
                     )
                 }
             }
+
             Icon(
                 imageVector = Icons.Default.CheckCircle,
                 contentDescription = "",
                 modifier = Modifier.size(15.dp),
-                tint = MaterialTheme.colorScheme.primary
+                tint = if (termPO.id == setting.termSetId) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline
             )
             CompositionLocalProvider(LocalMinimumInteractiveComponentEnforcement provides false) {
                 IconButton(onClick = { isShowOptMenu = true }) {
@@ -168,15 +212,33 @@ private fun TermCard(termPO: TermPO, toEdit: () -> Unit) {
                     ) {
                         DropdownMenuItem(
                             text = { Text(text = "设为当前", fontWeight = FontWeight.SemiBold) },
-                            onClick = { /*TODO*/ },
+                            onClick = {
+                                updateSetting(setting.copy(termSetId = termPO.id))
+                                isShowOptMenu = false
+                            },
                         )
                         DropdownMenuItem(
                             text = { Text(text = "编辑", fontWeight = FontWeight.SemiBold) },
                             onClick = toEdit
                         )
+                        var isShowTermDeleteConfirmDialog by remember {
+                            mutableStateOf(false)
+                        }
+                        TermDeleteConfirmDialog(
+                            isShow = isShowTermDeleteConfirmDialog,
+                            onDismissRequest = {
+                                isShowTermDeleteConfirmDialog = false
+                                isShowOptMenu = false
+                            },
+                            onConfirm = {
+                                doDelete(termPO)
+                                isShowOptMenu = false
+                            },
+                        )
                         DropdownMenuItem(
                             text = { Text(text = "删除", fontWeight = FontWeight.SemiBold) },
-                            onClick = { /*TODO*/ })
+                            onClick = { isShowTermDeleteConfirmDialog = true }
+                        )
                     }
                 }
             }

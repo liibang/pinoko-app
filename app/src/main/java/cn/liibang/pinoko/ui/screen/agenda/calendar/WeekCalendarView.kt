@@ -1,10 +1,10 @@
 package cn.liibang.pinoko.ui.screen.agenda.calendar
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.Icon
@@ -25,25 +25,22 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.snapshotFlow
+import androidx.compose.runtime.sourceInformation
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.kizitonwose.calendar.compose.WeekCalendar
 import com.kizitonwose.calendar.compose.weekcalendar.WeekCalendarState
-import com.kizitonwose.calendar.compose.weekcalendar.rememberWeekCalendarState
 import com.kizitonwose.calendar.core.Week
-import com.kizitonwose.calendar.core.atStartOfMonth
-import com.kizitonwose.calendar.core.daysOfWeek
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.launch
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.Period
-import java.time.YearMonth
 import java.time.format.TextStyle
 import java.time.temporal.TemporalAdjusters
 import java.util.Locale
@@ -52,7 +49,7 @@ import java.util.Locale
 fun WeekCalendarView(
     selectedDay: LocalDate,
     changeSelectedDay: (LocalDate) -> Unit,
-    isEventOnDayOfWeek: (LocalDate) -> StateFlow<Boolean>,
+    hasTaskAndCourseOnDateOfWeek: List<LocalDate>,
     inboxSize: Int,
     weekCalendarState: WeekCalendarState,
     now: LocalDate
@@ -75,13 +72,17 @@ fun WeekCalendarView(
                 selectedDay = selectedDay
             )
             Spacer(modifier = Modifier.weight(1f))
+
+            IconButton(modifier = Modifier.background(Color.Transparent), onClick = { /*TODO*/ }, enabled = false) {}
+
             if (now != selectedDay) {
                 IconButton(modifier = Modifier.offset(y = ((-1.5).dp)), onClick = {
                     // 还要修改week TODO
+                    changeSelectedDay(now)
                     scope.launch {
-                        changeSelectedDay(now)
                         weekCalendarState.animateScrollToWeek(now)
                     }
+
                 }) {
                     Box(contentAlignment = Alignment.Center) {
                         Icon(
@@ -103,42 +104,42 @@ fun WeekCalendarView(
             }
 
 
-            IconButton(modifier = Modifier.offset(y = (0.5.dp)), onClick = { /*TODO*/ }) {
-                Box() {
-                    BadgedBox(badge = {
-                        Badge(
-                            modifier = Modifier
-                                .scale(0.75f)
-                                .offset(
-                                    x = when {
-                                        inboxSize < 10 -> (-6).dp
-                                        inboxSize < 100 -> (0).dp
-                                        else -> (0).dp
-                                    }, y = (-3).dp
-                                ),
-                            containerColor = MaterialTheme.colorScheme.surfaceVariant
-                        ) {
-                            Text(if (inboxSize < 100) inboxSize.toString() else "99+")
-                        }
-                    }) {
-                        Icon(
-                            imageVector = Icons.Default.Inbox,
-                            contentDescription = "待办箱",
-                            tint = MaterialTheme.colorScheme.outline
-                        )
-                    }
-                }
-            }
-            IconButton(onClick = { /*TODO*/ }) {
-                Box {
-                    Icon(
-                        imageVector = Icons.Default.CalendarMonth,
-                        contentDescription = "改变日历视图",
-                        tint = MaterialTheme.colorScheme.outline
-                    )
-                }
-
-            }
+//            IconButton(modifier = Modifier.offset(y = (0.5.dp)), onClick = { /*TODO*/ }) {
+//                Box() {
+//                    BadgedBox(badge = {
+//                        Badge(
+//                            modifier = Modifier
+//                                .scale(0.75f)
+//                                .offset(
+//                                    x = when {
+//                                        inboxSize < 10 -> (-6).dp
+//                                        inboxSize < 100 -> (0).dp
+//                                        else -> (0).dp
+//                                    }, y = (-3).dp
+//                                ),
+//                            containerColor = MaterialTheme.colorScheme.surfaceVariant
+//                        ) {
+//                            Text(if (inboxSize < 100) inboxSize.toString() else "99+")
+//                        }
+//                    }) {
+//                        Icon(
+//                            imageVector = Icons.Default.Inbox,
+//                            contentDescription = "待办箱",
+//                            tint = MaterialTheme.colorScheme.outline
+//                        )
+//                    }
+//                }
+//            }
+//            IconButton(onClick = { /*TODO*/ }) {
+//                Box {
+//                    Icon(
+//                        imageVector = Icons.Default.CalendarMonth,
+//                        contentDescription = "改变日历视图",
+//                        tint = MaterialTheme.colorScheme.outline
+//                    )
+//                }
+//
+//            }
         }
         // 周
         WeekHeader()
@@ -146,7 +147,7 @@ fun WeekCalendarView(
         WeekCalendar(
             state = weekCalendarState,
             dayContent = { weekDay ->
-                val hasEvent by isEventOnDayOfWeek(weekDay.date).collectAsState()
+                val hasEvent = weekDay.date in hasTaskAndCourseOnDateOfWeek
                 Day(
                     dayText = weekDay.date.dayOfMonth.toString(),
                     isSelected = selectedDay == weekDay.date,
@@ -198,7 +199,6 @@ private fun DayText(selectedWeek: Week, now: LocalDate, selectedDay: LocalDate) 
                 }
             }
         }
-
         else -> "${selectedDay.year}年"
     }
     // 解析当前天
@@ -225,10 +225,16 @@ fun rememberFirstVisibleWeekAfterScroll(
             .collect {
                 visibleWeek.value = state.firstVisibleWeek
                 visibleWeek.value.days.map { it.date }.run {
-                    if (contains(now)) {
-                        changeSelectDay(selectedDay)
-                    } else {
+                    println("aaa: ${selectedDay}")
+                    println("aaa: ${this}")
+                    if (!contains(now)) {
+                        println("b")
                         changeSelectDay(first())
+                    } else if (selectedDay !in this || selectedDay == now ) {
+                        println("c")
+                        changeSelectDay(now)
+                    } else if (selectedDay in this) {
+                        changeSelectDay(selectedDay)
                     }
                 }
             }

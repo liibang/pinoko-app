@@ -63,12 +63,29 @@ android {
 
 dependencies {
 
+// https://mvnrepository.com/artifact/com.squareup.retrofit2/retrofit
+    implementation("com.squareup.retrofit2:retrofit:2.11.0")
+
+    implementation("cn.hutool:hutool-all:5.8.26")
+
+    implementation("com.mohamedrejeb.dnd:compose-dnd:0.2.0")
+
+    implementation("org.burnoutcrew.composereorderable:reorderable:0.9.6")
+
+    implementation("com.github.jaikeerthick:Composable-Graphs:v1.2.3") //ex: v1.2.3
+
+    implementation("com.tencent:mmkv:1.3.4")
+
+    implementation("com.github.skydoves:colorpicker-compose:1.0.7")
+
     //
     implementation("com.google.accompanist:accompanist-permissions:0.32.0")
 
 
     //hilt
     implementation("com.google.dagger:hilt-android:2.44")
+    implementation("androidx.appcompat:appcompat:1.6.1")
+    implementation("com.google.android.material:material:1.8.0")
     kapt("com.google.dagger:hilt-android-compiler:2.44")
     implementation("androidx.hilt:hilt-navigation-compose:1.0.0")
 
@@ -97,8 +114,9 @@ dependencies {
     implementation("androidx.core:core-ktx:1.12.0")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.6.2")
     implementation("androidx.activity:activity-compose:1.7.2")
-    implementation(platform("androidx.compose:compose-bom:2023.10.01"))
-    implementation("androidx.compose.material3:material3:1.2.0-alpha11")
+    implementation(platform("androidx.compose:compose-bom:2024.02.02"))
+    implementation("androidx.compose.foundation:foundation")
+    implementation("androidx.compose.material3:material3:1.1.2")
     implementation("androidx.compose.ui:ui")
     implementation("androidx.compose.ui:ui-graphics")
     implementation("androidx.compose.ui:ui-tooling-preview")

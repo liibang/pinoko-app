@@ -14,3 +14,11 @@ enum class CategoryColor(val code: Int, val color: Color) {
 fun categoryColor(colorId: Int?): Color {
     return CategoryColor.values().find { it.code == colorId }?.color ?: CategoryColor.DEFAULT_BLUE.color
 }
+
+fun categoryColor(colorId: Int): Color {
+    return CategoryColor.values().find { it.code == colorId }?.color ?: CategoryColor.DEFAULT_BLUE.color
+}
+
+fun categoryColorEnum(colorId: Int): CategoryColor {
+    return CategoryColor.values().find { it.code == colorId } ?: CategoryColor.DEFAULT_BLUE
+}

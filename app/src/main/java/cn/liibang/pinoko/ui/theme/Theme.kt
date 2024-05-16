@@ -93,11 +93,9 @@ fun AppTheme(
 
     val view = LocalView.current
     if (!view.isInEditMode) {
-        SideEffect() {
+        SideEffect {
             val window = (view.context as Activity).window
-//            window.statusBarColor = colorScheme.surfaceDim.toArgb()
-//                if (currentRouter == MainRouter.Agenda) colorScheme.surfaceDim.toArgb() else colorScheme.surface.toArgb()
-            WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = !darkTheme
+            WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = true
         }
     }
 

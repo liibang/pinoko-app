@@ -33,7 +33,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -41,10 +46,15 @@ import cn.liibang.pinoko.data.StringUUID
 import cn.liibang.pinoko.model.TaskVO
 import cn.liibang.pinoko.ui.constant.priorityColor
 import cn.liibang.pinoko.ui.screen.main.LocalNavController
+import cn.liibang.pinoko.ui.screen.main.MainRouter
 import cn.liibang.pinoko.ui.screen.main.SubRouter
+import cn.liibang.pinoko.ui.screen.task.TaskDeleteConfirmDialog
 import cn.liibang.pinoko.ui.support.Border
 import cn.liibang.pinoko.ui.support.border
+import cn.liibang.pinoko.ui.support.showToast
+import cn.liibang.pinoko.ui.support.toTimestamp
 import cn.liibang.pinoko.ui.theme.categoryColor
+import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
 
@@ -54,24 +64,27 @@ fun TaskCard(
     task: TaskVO,
     onCheckedChange: (String, Boolean) -> Unit,
     isShowCategoryColor: Boolean = false,
-    bottomPadding: Dp = 13.dp,
-    shapeSize: Dp = 10.dp,
-    shadowElevation: Dp = 2.5.dp,
+    bottomPadding: Dp = 10.dp,
+    shape: Shape = RoundedCornerShape(10.dp),
+    shadowElevation: Dp = 1.5.dp,
     categoryColorBorderWidth: Dp = 0.dp,
     deleteTask: (StringUUID) -> Unit,
+    isShowDueDate: Boolean = true,
 ) {
 
     var isShowMenu by remember {
         mutableStateOf(false)
     }
 
-    val isShowSecondRow = task.dueDate != null
+    val isShowSecondRow = isShowDueDate && task.dueDate != null || (task.dueTime != null)
 
     val navController = LocalNavController.current
+    val context = LocalContext.current
+
 
     Surface(
         modifier = Modifier.padding(bottom = bottomPadding),
-        shape = RoundedCornerShape(shapeSize),
+        shape = shape,
         shadowElevation = shadowElevation,
     ) {
         Row(
@@ -81,7 +94,9 @@ fun TaskCard(
                 .border(
                     start = Border(
                         strokeWidth = if (isShowCategoryColor) categoryColorBorderWidth else 0.dp,
-                        color = categoryColor(task.categoryColor)
+                        color = if (task.categoryColor == null) Color.Gray else categoryColor(
+                            task.categoryColor
+                        )
                     )
                 )
                 .padding(vertical = if (isShowSecondRow) (7.5).dp else 5.dp)
@@ -96,7 +111,10 @@ fun TaskCard(
                         .scale(0.9f)
                         .padding(top = 3.dp)
                         .align(if (isShowSecondRow) Alignment.Top else Alignment.CenterVertically),
-                    colors = CheckboxDefaults.colors(uncheckedColor = MaterialTheme.colorScheme.outline)
+                    colors = CheckboxDefaults.colors(
+                        uncheckedColor = MaterialTheme.colorScheme.outline,
+                        checkedColor = MaterialTheme.colorScheme.outline
+                    )
                 )
             }
             Spacer(modifier = Modifier.width(6.dp))
@@ -104,19 +122,33 @@ fun TaskCard(
                 Text(
                     text = task.name,
                     fontWeight = FontWeight.Normal,
-                    color = MaterialTheme.colorScheme.onSurface
+                    color = if (task.completed) Color.Gray else MaterialTheme.colorScheme.onSurface,
+                    textDecoration = if (task.completed) TextDecoration.LineThrough else TextDecoration.None
                 )
 
                 if (isShowSecondRow) {
-                    val isOverTime = LocalDateTime.now().isAfter(task.dueDate?.atTime(task.dueTime ?: LocalTime.MAX))
+                    val isOverTime = LocalDateTime.now()
+                        .isAfter(task.dueDate?.atTime(task.dueTime ?: LocalTime.MAX))
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier.padding(start = 5.dp)
                     ) {
                         Text(
-                            text = task.dueDate.toString() + " " + (task.dueTime ?: ""),
+                            text = if (isShowDueDate) {
+                                val now = LocalDate.now()
+                                when (task.dueDate) {
+                                    now -> "今天"
+                                    now.minusDays(1) -> "昨天"
+                                    now.minusDays(2) -> "前天"
+                                    now.plusDays(1) -> "明天"
+                                    now.plusDays(2) -> "后天"
+                                    else -> task.dueDate.toString()
+                                } + " " + (task.dueTime ?: "")
+                            } else {
+                                "" + " " + (task.dueTime ?: "")
+                            },
                             fontSize = 13.sp,
-                            color = if (isOverTime) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.outline
+                            color = if (isOverTime && !task.completed) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.outline
                         )
                         if (task.remindTime != null) {
                             Icon(
@@ -161,15 +193,32 @@ fun TaskCard(
                         )
                         DropdownMenuItem(
                             text = { Text("开始专注", fontWeight = FontWeight.SemiBold) },
-                            onClick = { },
+                            onClick = {
+                                navController.popBackStack()
+                                navController.navigate("${MainRouter.Focus.route}?taskId=${task.id}")
+                            },
                         )
                         DropdownMenuItem(
                             text = { Text("编辑", fontWeight = FontWeight.SemiBold) },
-                            onClick = { navController.navigate(SubRouter.TaskForm.routeWithParam(task.id)) },
+                            onClick = {
+                                navController.navigate(SubRouter.TaskForm.routeWithParam(task.id))
+                            },
+                        )
+                        var isShowTaskDeleteConfirmDialog by remember {
+                            mutableStateOf(false)
+                        }
+                        TaskDeleteConfirmDialog(
+                            isShow = isShowTaskDeleteConfirmDialog,
+                            onDismissRequest = { isShowTaskDeleteConfirmDialog = false },
+                            onConfirm = {
+                                deleteTask(task.id)
+                                context.showToast("删除成功")
+                                isShowMenu = false
+                            }
                         )
                         DropdownMenuItem(
                             text = { Text("删除", fontWeight = FontWeight.SemiBold) },
-                            onClick = { deleteTask(task.id) }
+                            onClick = { isShowTaskDeleteConfirmDialog = true }
                         )
                     }
                 }
