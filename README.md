@@ -1,4 +1,6 @@
-![14-数据统计界面2](https://github.com/user-attachments/assets/8976b77c-4796-4ed9-9165-6b566b0b3f28)基于Compose的时间管理APP
+基于Compose的时间管理APP
+
+[![2.jpg](https://i.postimg.cc/zGn6yTSd/2.jpg)](https://postimg.cc/ts42fZcP)
 
 [![效果图.jpg](https://i.postimg.cc/XJX33QJv/1.jpg)](https://postimg.cc/ZBkXxP6k)
 
